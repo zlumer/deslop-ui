@@ -1,12 +1,15 @@
-import { it, expect } from 'vitest';
+import { expect } from 'vitest';
+import { test } from './test-utils';
 import { runCliRefactor } from '../src/refactor';
 import { runVisualRegression } from '../src/visual-regression';
 import path from 'path';
 
-it('Scenario 1: Happy Path Extraction (Content-Based Assertions)', async () =>
+test('Scenario 1: Happy Path Extraction (Content-Based Assertions)', async ({ testProjectDir }) =>
 {
 	// 1. Run the CLI against the target monolith
-	const result = await runCliRefactor('src/components/UserCard.tsx');
+	const result = await runCliRefactor('src/components/UserCard.tsx', {
+		cwd: testProjectDir
+	});
 
 	// --- HELPER FUNCTION ---
 	// Searches recursively through a directory to find a component by its JSX footprint

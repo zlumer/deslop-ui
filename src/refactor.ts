@@ -12,6 +12,8 @@ export interface AiExtractionMap {
 }
 
 export interface RefactorCliOptions {
+  /** The current working directory to resolve paths from. Defaults to process.cwd() */
+  cwd?: string;
   /** Path to the pure hooks directory. Defaults to '@/atomic-pure-hooks' */
   pureHooksWhitelistDir?: string;
   /** If provided, bypasses the actual LLM call and uses this deterministic map (crucial for unit tests) */

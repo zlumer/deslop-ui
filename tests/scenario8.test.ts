@@ -1,8 +1,9 @@
-import { it, expect } from 'vitest';
+import { expect } from 'vitest';
+import { test } from './test-utils';
 import { runCliRefactor } from '../src/refactor';
 
-it('Scenario 8: The Guard Clause (Leaf Nodes & Multiple Returns)', async () => {
-  const result = await runCliRefactor('src/components/GuardedComponent.tsx');
+test('Scenario 8: The Guard Clause (Leaf Nodes & Multiple Returns)', async ({ testProjectDir }) => {
+  const result = await runCliRefactor('src/components/GuardedComponent.tsx', { cwd: testProjectDir });
 
   const glueCode = result.fs.read('src/components/GuardedComponent/GuardedComponent.tsx');
 

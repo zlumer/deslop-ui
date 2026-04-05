@@ -1,8 +1,9 @@
-import { it, expect } from 'vitest';
+import { expect } from 'vitest';
+import { test } from './test-utils';
 import { runCliRefactor } from '../src/refactor';
 
-it('Scenario 3: Hook Purity Sorting', async () => {
-  const result = await runCliRefactor('tests/test-project/src/components/DashboardWidget.tsx');
+test('Scenario 3: Hook Purity Sorting', async ({ testProjectDir }) => {
+  const result = await runCliRefactor('tests/test-project/src/components/DashboardWidget.tsx', { cwd: testProjectDir });
 
   const glueCode = result.fs.read('tests/test-project/src/components/DashboardWidget/DashboardWidget.tsx');
   

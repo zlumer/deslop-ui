@@ -1,8 +1,9 @@
-import { it, expect } from 'vitest';
+import { expect } from 'vitest';
+import { test } from './test-utils';
 import { runCliRefactor } from '../src/refactor';
 
-it('Scenario 2: Deduplication via Structural Hashing', async () => {
-  const result = await runCliRefactor('src/components/ConfirmDialog.tsx');
+test('Scenario 2: Deduplication via Structural Hashing', async ({ testProjectDir }) => {
+  const result = await runCliRefactor('src/components/ConfirmDialog.tsx', { cwd: testProjectDir });
 
   // 1. Verify only ONE button atom was created
   const atomFiles = result.fs.glob('src/components/ConfirmDialog/atoms/**/*.tsx');

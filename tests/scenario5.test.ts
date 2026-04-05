@@ -1,8 +1,9 @@
-import { it, expect } from 'vitest';
+import { expect } from 'vitest';
+import { test } from './test-utils';
 import { runCliRefactor } from '../src/refactor';
 
-it('Scenario 5: The Slot Pattern / Layout Extraction', async () => {
-  const result = await runCliRefactor('src/components/DashboardPage.tsx');
+test('Scenario 5: The Slot Pattern / Layout Extraction', async ({ testProjectDir }) => {
+  const result = await runCliRefactor('src/components/DashboardPage.tsx', { cwd: testProjectDir });
 
   const layoutFiles = result.fs.glob('src/components/DashboardPage/layouts/**/*.tsx');
   expect(layoutFiles.length).toBeGreaterThan(0);

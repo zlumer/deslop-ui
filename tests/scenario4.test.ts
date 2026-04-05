@@ -1,8 +1,9 @@
-import { it, expect } from 'vitest';
+import { expect } from 'vitest';
+import { test } from './test-utils';
 import { runCliRefactor } from '../src/refactor';
 
-it('Scenario 4: Inline State Mutation Hoisting', async () => {
-  const result = await runCliRefactor('src/components/ToggleWidget.tsx');
+test('Scenario 4: Inline State Mutation Hoisting', async ({ testProjectDir }) => {
+  const result = await runCliRefactor('src/components/ToggleWidget.tsx', { cwd: testProjectDir });
 
   const files = result.fs.glob('src/components/ToggleWidget/atoms/**/*.tsx');
   const buttonAtomPath = files.find(f => result.fs.read(f).includes('<button'));
