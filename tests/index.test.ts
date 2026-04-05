@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getGreeting } from './index';
+import { getGreeting } from '../src/index';
 
 describe('CLI App', () => {
     it('should generate a correct greeting', () => {
