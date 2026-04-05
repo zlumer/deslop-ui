@@ -30,7 +30,12 @@ export interface VisualRegressionResult {
  * @param options Render configurations including mock props and threshold.
  * @returns A promise resolving to the pixel difference percentage and diff image.
  */
-export declare function runVisualRegression(
+export const runVisualRegression = async (
   componentIdentifier: string,
   options?: VisualRegressionOptions
-): Promise<VisualRegressionResult>;
+): Promise<VisualRegressionResult> => {
+  return {
+    diffPercentage: 100,
+    passed: false
+  };
+};

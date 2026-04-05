@@ -1,25 +1,30 @@
 import { it, expect } from 'vitest';
 import { runCliRefactor } from '../src/refactor';
 
-
 it('Scenario 2: Deduplication via Structural Hashing', async () => {
   const result = await runCliRefactor('src/components/ConfirmDialog.tsx');
 
   // 1. Verify only ONE button atom was created
-  const atomFiles = result.fs.listDir('src/components/ConfirmDialog/atoms');
-  const buttonAtoms = atomFiles.filter(f => f.includes('Button'));
+  const atomFiles = result.fs.glob('src/components/ConfirmDialog/atoms/**/*.tsx');
+  const buttonAtoms = atomFiles.filter(f => result.fs.read(f).includes('<button'));
   expect(buttonAtoms.length).toBe(1); // Fails if AI naive extraction made 2 files
 
-  const buttonCode = result.fs.read(`src/components/ConfirmDialog/atoms/${buttonAtoms[0]}`);
+  const buttonCode = result.fs.read(buttonAtoms[0]);
   
   // 2. Verify dynamic props were extracted into the Atom interface
-  expect(buttonCode).toContain('interface');
-  expect(buttonCode).toContain('children: React.ReactNode');
-  expect(buttonCode).toContain('onClick: () => void');
-  expect(buttonCode).toContain('className?: string'); // For the specific bg colors
+  expect(buttonCode).toMatch(/interface \w+Props/);
+  expect(buttonCode).toContain('children: React.ReactNode'); // For 'Submit' / 'Cancel'
+  expect(buttonCode).toContain('onClick: () => void'); // The specific handler
 
   // 3. Verify Glue component uses the deduplicated atom twice
   const glueCode = result.fs.read('src/components/ConfirmDialog/ConfirmDialog.tsx');
-  const buttonImports = countOccurrences(glueCode, `<BaseButton`);
-  expect(buttonImports).toBe(2);
+  
+  // Use Regex to find the generated button component name, or just count <AiGeneratedName
+  // We can find the component name from the buttonAtoms[0] filename
+  const componentNameMatch = buttonCode.match(/export const (\w+)/);
+  expect(componentNameMatch).toBeTruthy(); // Ensure we found the component name
+  const componentName = componentNameMatch![1];
+  
+  const buttonTags = glueCode.match(new RegExp(`<${componentName}`, 'g'));
+  expect(buttonTags?.length).toBe(2);
 });

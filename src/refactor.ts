@@ -49,7 +49,19 @@ export interface RefactorResult {
  * @param options Configuration for the CLI run, including AI mocking for tests.
  * @returns A promise resolving to the RefactorResult containing the FileSystem wrapper.
  */
-export declare function runCliRefactor(
+export const runCliRefactor = async (
   targetPath: string,
   options?: RefactorCliOptions
-): Promise<RefactorResult>;
+): Promise<RefactorResult> => {
+  return {
+    success: false,
+    fs: {
+      exists: () => false,
+      read: () => '',
+      listDir: () => [],
+      glob: () => []
+    },
+    warnings: [],
+    tmpRefactorDir: ''
+  };
+};
