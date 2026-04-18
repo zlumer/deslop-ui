@@ -94,7 +94,7 @@ describe('[2-props]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'UserInfo',
-			hardcodeChildren: false, // No children to extract
+			hardcodeChildren: true,
 			selectedProps: ['userName', 'age'] // Pass detected props
 		} satisfies RefactorDecisions
 
