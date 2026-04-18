@@ -292,7 +292,7 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 			decisionsRequest,
 			decisions
 		)
-		console.log(applyTextChanges(INPUT_CODE, result.textChanges))
+		// console.log(applyTextChanges(INPUT_CODE, result.textChanges))
 
 		// Assertions for Step 3
 		expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const Heading = ...
