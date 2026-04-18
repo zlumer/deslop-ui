@@ -78,22 +78,25 @@ function normalizeNode(node: ts.Node): any {
 		result.declarations = normalizeArray(node.declarationList.declarations);
 	} else if (ts.isVariableDeclaration(node)) {
 		result.name = normalizeNode(node.name);
-		result.initializer = normalizeNode(node.initializer!);
+		result.initializer = node.initializer ? normalizeNode(node.initializer) : null;
 	} else if (ts.isArrowFunction(node) || ts.isFunctionDeclaration(node)) {
 		result.parameters = normalizeArray(node.parameters);
 		result.body = normalizeNode(node.body!);
 	} else if (ts.isParameter(node)) {
 		result.name = normalizeNode(node.name);
+		result.type = node.type ? normalizeNode(node.type) : null;
 	} else if (ts.isObjectBindingPattern(node)) {
 		result.elements = normalizeArray(node.elements);
 	} else if (ts.isBindingElement(node)) {
 		result.name = normalizeNode(node.name);
 	} else if (ts.isJsxElement(node)) {
-		result.openingElement = normalizeNode(node.openingElement);
+		result.tagName = normalizeNode(node.openingElement.tagName);
+		result.attributes = normalizeNode(node.openingElement.attributes);
 		result.children = normalizeArray(node.children);
 	} else if (ts.isJsxSelfClosingElement(node)) {
 		result.tagName = normalizeNode(node.tagName);
 		result.attributes = normalizeNode(node.attributes);
+		result.children = []; // Normalize self-closing to have empty children for comparison
 	} else if (ts.isJsxOpeningElement(node)) {
 		result.tagName = normalizeNode(node.tagName);
 		result.attributes = normalizeNode(node.attributes);
@@ -101,11 +104,11 @@ function normalizeNode(node: ts.Node): any {
 		result.properties = normalizeArray(node.properties);
 	} else if (ts.isJsxAttribute(node)) {
 		result.name = normalizeNode(node.name);
-		result.initializer = normalizeNode(node.initializer!);
+		result.initializer = node.initializer ? normalizeNode(node.initializer) : null;
 	} else if (ts.isJsxExpression(node)) {
-		result.expression = normalizeNode(node.expression!);
+		result.expression = node.expression ? normalizeNode(node.expression) : null;
 	} else if (ts.isReturnStatement(node)) {
-		result.expression = normalizeNode(node.expression!);
+		result.expression = node.expression ? normalizeNode(node.expression) : null;
 	} else if (ts.isBlock(node)) {
 		result.statements = normalizeArray(node.statements);
 	} else if (ts.isSourceFile(node)) {
@@ -132,7 +135,11 @@ function normalizeArray(nodes: ts.NodeArray<ts.Node> | readonly ts.Node[]): any[
 	const arr = nodes.map(normalizeNode).filter(n => n !== null);
 	
 	// Sort members/properties to ignore ordering differences
-	if (arr.length > 0 && (arr[0].kind === ts.SyntaxKind.PropertySignature || arr[0].kind === ts.SyntaxKind.BindingElement || arr[0].kind === ts.SyntaxKind.JsxAttribute)) {
+	if (arr.length > 0 && (
+		arr[0].kind === ts.SyntaxKind.PropertySignature || 
+		arr[0].kind === ts.SyntaxKind.BindingElement || 
+		arr[0].kind === ts.SyntaxKind.JsxAttribute
+	)) {
 		arr.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 	}
 	
