@@ -19,5 +19,8 @@
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   },
-  "bin": {}
+  "bin": {},
+  "dependencies": {
+    "typescript-equals": "^1.0.0"
+  }
 }
