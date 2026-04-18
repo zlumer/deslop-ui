@@ -28,6 +28,42 @@ export const App = () => {
 	)
 }`
 
+const BUTTON_NO_TEXT = `const SubmitButton = ({ children }) => <button className="btn-primary">{children}</button>;
+
+export const App = () => {
+	return (
+		<div>
+			<h1>Welcome</h1>
+			{/* Target: Extract <button> into \`SubmitButton\` */}
+			<SubmitButton>Submit Form</SubmitButton>
+		</div>
+	)
+}`
+
+const H1_WTEXT = `const Heading = () => <h1>Welcome</h1>;
+
+export const App = () => {
+	return (
+		<div>
+			<Heading />
+			{/* Target: Extract <button> into \`SubmitButton\` */}
+			<button className="btn-primary">Submit Form</button>
+		</div>
+	)
+}`
+
+const H1_NOTEXT = `const Heading = ({ children }) => <h1>{children}</h1>;
+
+export const App = () => {
+	return (
+		<div>
+			<Heading>Welcome</Heading>
+			{/* Target: Extract <button> into \`SubmitButton\` */}
+			<button className="btn-primary">Submit Form</button>
+		</div>
+	)
+}`
+
 describe('[1-simple] Extract JSX Component Refactoring', () =>
 {
 	sft('should successfully extract a <button> into a SubmitButton component', INPUT_CODE, BUTTON_WITH_TEXT, ({
@@ -80,6 +116,71 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		const decisions = {
 			componentName: 'SubmitButton',
 			extractChildren: true, // User decides to hardcode "Submit Form" into the new component
+			selectedProps: []      // No props to pass
+		} satisfies RefactorDecisions
+
+		const result = performRefactoring(
+			sourceFile,
+			decisionsRequest,
+			decisions
+		)
+
+		// Assertions for Step 3
+		expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const SubmitButton = ...
+		expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxSelfClosingElement); // <SubmitButton />
+
+		return result
+	});
+	sft('should extract text content into children prop if user opts to make it dynamic', INPUT_CODE, BUTTON_NO_TEXT, ({
+		inputCode,
+		sourceFile,
+		typeChecker,
+	}) =>
+	{
+		// Find the text offsets for: <button className="btn-primary">Submit Form</button>
+		const buttonStart = inputCode.lastIndexOf('<button');
+		const buttonEnd = inputCode.indexOf('</button>') + '</button>'.length;
+		const selection = { start: buttonStart, end: buttonEnd };
+
+
+		// -------------------------------------------------------------------
+		// STEP 1: Detect Components
+		// -------------------------------------------------------------------
+		const candidates = detectComponents(sourceFile, selection)
+		// console.log('Detected Candidates:', candidates.map(c => c.description));
+
+		// Assertions for Step 1
+		expect(candidates.length).toBeGreaterThanOrEqual(1);
+		const buttonCandidate = candidates.find(c => c.description.includes('<button'))!;
+		expect(buttonCandidate).toBeDefined();
+		expect(buttonCandidate.node.kind).toBe(ts.SyntaxKind.JsxElement);
+		expect(buttonCandidate.description).toContain('<button');
+
+
+		// -------------------------------------------------------------------
+		// STEP 2: Detect Props and Context
+		// -------------------------------------------------------------------
+		const decisionsRequest = detectPropsList(
+			sourceFile,
+			typeChecker,
+			buttonCandidate
+		);
+
+		// Assertions for Step 2
+		// Since the <button> uses no external variables from App(), props should be empty
+		expect(decisionsRequest.props).toHaveLength(0);
+		// It has a text child: "Submit Form"
+		expect(decisionsRequest.hasChildren).toBe(true);
+		expect(decisionsRequest.childrenNodes.length).toBe(1);
+		expect(decisionsRequest.childrenNodes[0].kind).toBe(ts.SyntaxKind.JsxText);
+
+
+		// -------------------------------------------------------------------
+		// STEP 3: Perform Refactor
+		// -------------------------------------------------------------------
+		const decisions = {
+			componentName: 'SubmitButton',
+			extractChildren: false, // User decides to hardcode "Submit Form" into the new component
 			selectedProps: []      // No props to pass
 		} satisfies RefactorDecisions
 
