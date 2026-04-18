@@ -84,6 +84,7 @@ export const App = () => {
         // STEP 1: Detect Components
         // -------------------------------------------------------------------
         const candidates = detectComponents(sourceFile, selection) satisfies ExtractionCandidates
+		console.log('Detected Candidates:', candidates.map(c => c.description));
         
         // Assertions for Step 1
         expect(candidates.length).toBeGreaterThanOrEqual(1);

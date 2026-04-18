@@ -22,11 +22,8 @@ export function detectComponents(
         if (start <= selection.end && end >= selection.start) {
             if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
                 let description = node.getText(sourceFile).split('\n')[0];
-                if (description.length > 50) {
-                    description = description.substring(0, 47) + '...';
-                }
                 candidates.push({
-                    node: node as any,
+                    node,
                     description
                 });
             }
