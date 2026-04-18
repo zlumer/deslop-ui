@@ -95,7 +95,7 @@ describe('Extract JSX Component Refactoring', () => {
         // -------------------------------------------------------------------
         // STEP 2: Detect Props and Context
         // -------------------------------------------------------------------
-        const decisionsRequest: DecisionsRequest = detectPropsList(
+        const decisionsRequest = detectPropsList(
             sourceFile, 
             typeChecker, 
             candidates[0]
