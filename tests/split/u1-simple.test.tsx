@@ -75,7 +75,7 @@ describe('Extract JSX Component Refactoring', () => {
         const { sourceFile, typeChecker } = prepareTS(INPUT_CODE);
 
         // Find the text offsets for: <button className="btn-primary">Submit Form</button>
-        const buttonStart = INPUT_CODE.indexOf('<button');
+        const buttonStart = INPUT_CODE.lastIndexOf('<button');
         const buttonEnd = INPUT_CODE.indexOf('</button>') + '</button>'.length;
         const selection = { start: buttonStart, end: buttonEnd };
 
