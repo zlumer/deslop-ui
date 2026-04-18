@@ -88,17 +88,27 @@ export function performRefactoring(
     const componentName = decisions.componentName;
     const node = request.astData.node;
     
-    // Create new component AST
-    const newComponentAst = ts.factory.createFunctionDeclaration(
+    // Create new component AST as a VariableStatement (const Component = () => ...)
+    const newComponentAst = ts.factory.createVariableStatement(
         undefined,
-        undefined,
-        componentName,
-        undefined,
-        [],
-        undefined,
-        ts.factory.createBlock([
-            ts.factory.createReturnStatement(node as ts.Expression)
-        ], true)
+        ts.factory.createVariableDeclarationList(
+            [
+                ts.factory.createVariableDeclaration(
+                    ts.factory.createIdentifier(componentName),
+                    undefined,
+                    undefined,
+                    ts.factory.createArrowFunction(
+                        undefined,
+                        undefined,
+                        [],
+                        undefined,
+                        ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+                        node as ts.Expression
+                    )
+                )
+            ],
+            ts.NodeFlags.Const
+        )
     );
 
     // Create replacement AST
