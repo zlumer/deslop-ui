@@ -12,8 +12,30 @@ export function detectComponents(
     selection: EditorSelection
 ): ExtractionCandidates
 {
-	// Implementation would involve traversing the AST to find JSX nodes that intersect with the selection
-	throw new Error('Not implemented yet');
+    const candidates: ExtractionCandidates = [];
+
+    function visit(node: ts.Node) {
+        const start = node.getStart(sourceFile);
+        const end = node.getEnd();
+
+        // Check if the node intersects with the selection
+        if (start <= selection.end && end >= selection.start) {
+            if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
+                let description = node.getText(sourceFile).split('\n')[0];
+                if (description.length > 50) {
+                    description = description.substring(0, 47) + '...';
+                }
+                candidates.push({
+                    node: node as any,
+                    description
+                });
+            }
+            ts.forEachChild(node, visit);
+        }
+    }
+
+    visit(sourceFile);
+    return candidates;
 }
 
 /**
