@@ -1,4 +1,7 @@
+import { expect, it } from 'vitest';
 import * as ts from 'typescript';
+import { RefactorResult } from '../../src/extract/types';
+import { applyTextChanges } from '../../src/extract/applyTextChanges';
 
 export function prepareTS(inputCode: string)
 {
@@ -31,4 +34,27 @@ export function prepareTS(inputCode: string)
 		throw new Error("Failed to generate SourceFile");
 	}
 	return { sourceFile, typeChecker };
+}
+
+export function sft(title: string, INPUT_CODE: string, EXPECTED_CODE: string, testFn: (args: {
+	inputCode: string,
+	sourceFile: ts.SourceFile,
+	typeChecker: ts.TypeChecker
+}) => RefactorResult)
+{
+	return it(title, () =>
+	{
+		// -------------------------------------------------------------------
+		// SETUP: Define inputs, outputs, and create a TS Program
+		// -------------------------------------------------------------------
+
+		// Set up an in-memory TypeScript program to get AST and TypeChecker
+		const { sourceFile, typeChecker } = prepareTS(INPUT_CODE);
+
+		const result = testFn({ inputCode: INPUT_CODE, sourceFile, typeChecker });
+
+		// Apply TextChanges to the original string to verify the final output
+		const finalSourceCode = applyTextChanges(INPUT_CODE, result.textChanges);
+		expect(finalSourceCode).toBe(EXPECTED_CODE);
+	})
 }

@@ -1,11 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect } from 'vitest';
 import * as ts from 'typescript';
-import { applyTextChanges } from '../../src/extract/applyTextChanges';
 import { performRefactoring } from '../../src/extract/performRefactoring';
 import { detectPropsList } from '../../src/extract/detectPropsList';
 import { detectComponents } from '../../src/extract/detectComponents';
 import { RefactorDecisions } from '../../src/extract/types';
-import { prepareTS } from './utils';
+import { sft } from './utils';
 
 const INPUT_CODE = `export const App = () => {
 	return (
@@ -17,7 +16,7 @@ const INPUT_CODE = `export const App = () => {
 	)
 }`;
 
-const EXPECTED_CODE = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>;
+const BUTTON_WITH_TEXT = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>;
 
 export const App = () => {
 	return (
@@ -27,22 +26,19 @@ export const App = () => {
 			<SubmitButton />
 		</div>
 	)
-}`;
+}`
 
 describe('[1-simple] Extract JSX Component Refactoring', () =>
 {
-	it('should successfully extract a <button> into a SubmitButton component', () =>
+	sft('should successfully extract a <button> into a SubmitButton component', INPUT_CODE, BUTTON_WITH_TEXT, ({
+		inputCode,
+		sourceFile,
+		typeChecker,
+	}) =>
 	{
-		// -------------------------------------------------------------------
-		// SETUP: Define inputs, outputs, and create a TS Program
-		// -------------------------------------------------------------------
-
-		// Set up an in-memory TypeScript program to get AST and TypeChecker
-		const { sourceFile, typeChecker } = prepareTS(INPUT_CODE);
-
 		// Find the text offsets for: <button className="btn-primary">Submit Form</button>
-		const buttonStart = INPUT_CODE.lastIndexOf('<button');
-		const buttonEnd = INPUT_CODE.indexOf('</button>') + '</button>'.length;
+		const buttonStart = inputCode.lastIndexOf('<button');
+		const buttonEnd = inputCode.indexOf('</button>') + '</button>'.length;
 		const selection = { start: buttonStart, end: buttonEnd };
 
 
@@ -97,8 +93,6 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const SubmitButton = ...
 		expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxSelfClosingElement); // <SubmitButton />
 
-		// Apply TextChanges to the original string to verify the final output
-		const finalSourceCode = applyTextChanges(INPUT_CODE, result.textChanges);
-		expect(finalSourceCode).toBe(EXPECTED_CODE);
+		return result
 	});
 });
