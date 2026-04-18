@@ -5,6 +5,7 @@ import { detectPropsList } from '../../src/extract/detectPropsList';
 import { detectComponents } from '../../src/extract/detectComponents';
 import { RefactorDecisions } from '../../src/extract/types';
 import { sft } from './utils';
+import { applyTextChanges } from '../../src/extract/applyTextChanges';
 
 const INPUT_CODE = `export const App = () => {
 	return (
@@ -180,7 +181,7 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'SubmitButton',
-			extractChildren: false, // User decides to hardcode "Submit Form" into the new component
+			extractChildren: false,
 			selectedProps: []      // No props to pass
 		} satisfies RefactorDecisions
 
@@ -189,10 +190,11 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 			decisionsRequest,
 			decisions
 		)
+		// console.log(applyTextChanges(INPUT_CODE, result.textChanges))
 
 		// Assertions for Step 3
 		expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const SubmitButton = ...
-		expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxSelfClosingElement); // <SubmitButton />
+		expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxElement); // <SubmitButton>...</SubmitButton>
 
 		return result
 	});
