@@ -92,25 +92,25 @@ function matrix<T>(arr1: T[], arr2: T[])
 	return result
 }
 
-describe('fuzzy equality', () =>
+describe('code fuzzy equal', () =>
 {
-	it.each(matrix(CODE, CODE))('should consider code with different formatting as equal [$2][$3]', ([a, b]) =>
+	it.each(matrix(CODE, CODE))('code [$2][$3]', ([a, b]) =>
 	{
 		expect(equals(a, b)).toBe(true)
 	})
-	it.each(matrix(ONE_LINERS, ONE_LINERS))('should consider one-liners with different formatting as equal [$2][$3]', ([a, b]) =>
+	it.each(matrix(ONE_LINERS, ONE_LINERS))('one-liners [$2][$3]', ([a, b]) =>
 	{
 		expect(equals(a, b)).toBe(true)
 	})
-	it.each(matrix(ONE_LINERS_2, ONE_LINERS_2))('should consider one-liners with different formatting as equal-2 [$2][$3]', ([a, b]) =>
+	it.each(matrix(ONE_LINERS_2, ONE_LINERS_2))('one-liners-2 [$2][$3]', ([a, b]) =>
 	{
 		expect(equals(a, b)).toBe(true)
 	})
-	it.each(matrix(ONE_LINERS_2, DIFFERENT_2))('should consider different code as not equal [$2][$3]', ([a, b]) =>
+	it.each(matrix(ONE_LINERS_2, DIFFERENT_2))('different code [$2][$3]', ([a, b]) =>
 	{
 		expect(equals(a, b)).toBe(false)
 	})
-	it.each(matrix(DIFFERENT_2, DIFFERENT_2))('should consider different code as not equal-2 [$2][$3]', ([a, b]) =>
+	it.each(matrix(DIFFERENT_2, DIFFERENT_2))('different code-2 [$2][$3]', ([a, b]) =>
 	{
 		expect(equals(a, b)).toBe(false)
 	})
