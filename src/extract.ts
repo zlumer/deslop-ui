@@ -85,5 +85,48 @@ export function performRefactoring(
     decisions: RefactorDecisions
 ): RefactorResult
 {
-	throw new Error('Not implemented yet');
+    const componentName = decisions.componentName;
+    const node = request.astData.node;
+    
+    // Create new component AST
+    const newComponentAst = ts.factory.createFunctionDeclaration(
+        undefined,
+        undefined,
+        componentName,
+        undefined,
+        [],
+        undefined,
+        ts.factory.createBlock([
+            ts.factory.createReturnStatement(node as ts.Expression)
+        ], true)
+    );
+
+    // Create replacement AST
+    const replacementAst = ts.factory.createJsxSelfClosingElement(
+        ts.factory.createIdentifier(componentName),
+        undefined,
+        ts.factory.createJsxAttributes([])
+    );
+
+    // Create text changes
+    const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+    const newComponentText = printer.printNode(ts.EmitHint.Unspecified, newComponentAst, sourceFile);
+    const replacementText = printer.printNode(ts.EmitHint.Unspecified, replacementAst, sourceFile);
+
+    const textChanges: ts.TextChange[] = [
+        {
+            span: { start: node.getStart(sourceFile), length: node.getWidth(sourceFile) },
+            newText: replacementText
+        },
+        {
+            span: { start: 0, length: 0 },
+            newText: newComponentText + '\n\n'
+        }
+    ];
+
+    return {
+        textChanges,
+        newComponentAst,
+        replacementAst: replacementAst as any
+    };
 }
