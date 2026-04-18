@@ -24,70 +24,92 @@ export function performRefactoring(
 	const parameters: ts.ParameterDeclaration[] = [];
 	let typeAnnotation: ts.TypeNode;
 
-	if (!decisions.hardcodeChildren && ts.isJsxElement(node)) {
-		// Add { children } to parameters
+	const selectedProps = decisions.selectedProps || [];
+	const hasProps = selectedProps.length > 0;
+	const bindingElements: ts.BindingElement[] = [];
+	const jsxAttributes: ts.JsxAttribute[] = [];
+
+	// Handle props
+	if (hasProps) {
+		for (const propName of selectedProps) {
+			bindingElements.push(ts.factory.createBindingElement(undefined, undefined, propName));
+			jsxAttributes.push(
+				ts.factory.createJsxAttribute(
+					ts.factory.createIdentifier(propName),
+					ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier(propName))
+				)
+			);
+		}
+	}
+
+	const hasChildren = !decisions.hardcodeChildren && ts.isJsxElement(node);
+
+	if (hasChildren) {
+		bindingElements.push(ts.factory.createBindingElement(undefined, undefined, 'children'));
+
+		// Replace children in the extracted component with {children}
+		componentBody = ts.factory.updateJsxElement(
+			node as ts.JsxElement,
+			(node as ts.JsxElement).openingElement,
+			[ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children'))],
+			(node as ts.JsxElement).closingElement
+		);
+	}
+
+	if (bindingElements.length > 0) {
 		parameters.push(
 			ts.factory.createParameterDeclaration(
 				undefined,
 				undefined,
-				ts.factory.createObjectBindingPattern([
-					ts.factory.createBindingElement(undefined, undefined, 'children')
-				])
+				ts.factory.createObjectBindingPattern(bindingElements)
 			)
 		);
+	}
 
-		typeAnnotation = ts.factory.createTypeReferenceNode(
-			ts.factory.createQualifiedName(
-				ts.factory.createIdentifier('React'),
-				ts.factory.createIdentifier('FC')
-			),
-			[
-				ts.factory.createTypeReferenceNode(
-					ts.factory.createQualifiedName(
-						ts.factory.createIdentifier('React'),
-						ts.factory.createIdentifier('PropsWithChildren')
-					),
-					undefined
-				)
-			]
+	// Determine type annotation
+	const typeArgs: ts.TypeNode[] = [];
+	if (hasProps) {
+		typeArgs.push(ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(`${componentName}Props`), undefined));
+	} else if (hasChildren) {
+		typeArgs.push(
+			ts.factory.createTypeReferenceNode(
+				ts.factory.createQualifiedName(
+					ts.factory.createIdentifier('React'),
+					ts.factory.createIdentifier('PropsWithChildren')
+				),
+				undefined
+			)
 		);
+	}
 
-		// Replace children in the extracted component with {children}
-		componentBody = ts.factory.updateJsxElement(
-			node,
-			node.openingElement,
-			[ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children'))],
-			node.closingElement
-		);
+	typeAnnotation = ts.factory.createTypeReferenceNode(
+		ts.factory.createQualifiedName(
+			ts.factory.createIdentifier('React'),
+			ts.factory.createIdentifier('FC')
+		),
+		typeArgs.length > 0 ? typeArgs : undefined
+	);
 
-		// Create replacement AST that wraps the original children
+	// Create replacement AST
+	if (hasChildren) {
 		replacementAst = ts.factory.createJsxElement(
 			ts.factory.createJsxOpeningElement(
 				ts.factory.createIdentifier(componentName),
 				undefined,
-				ts.factory.createJsxAttributes([])
+				ts.factory.createJsxAttributes(jsxAttributes)
 			),
-			node.children,
+			(node as ts.JsxElement).children,
 			ts.factory.createJsxClosingElement(ts.factory.createIdentifier(componentName))
 		);
 	} else {
-		typeAnnotation = ts.factory.createTypeReferenceNode(
-			ts.factory.createQualifiedName(
-				ts.factory.createIdentifier('React'),
-				ts.factory.createIdentifier('FC')
-			),
-			undefined
-		);
-
-		// Create self-closing replacement AST
 		replacementAst = ts.factory.createJsxSelfClosingElement(
 			ts.factory.createIdentifier(componentName),
 			undefined,
-			ts.factory.createJsxAttributes([])
+			ts.factory.createJsxAttributes(jsxAttributes)
 		);
 	}
 
-	// Create new component AST as a VariableStatement (const Component = () => ...)
+	// Create new component AST
 	const newComponentAst = ts.factory.createVariableStatement(
 		undefined,
 		ts.factory.createVariableDeclarationList(
@@ -110,9 +132,32 @@ export function performRefactoring(
 		)
 	);
 
-	// Create text changes
 	const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
-	const newComponentText = printer.printNode(ts.EmitHint.Unspecified, newComponentAst, sourceFile);
+	let newComponentText = '';
+
+	// Generate Props Type Alias if needed
+	if (hasProps) {
+		const typeElements = selectedProps.map(propName => {
+			const propCand = request.props.find(p => p.name === propName);
+			const typeNode = propCand?.typeNode || ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+			return ts.factory.createPropertySignature(
+				undefined,
+				ts.factory.createIdentifier(propName),
+				undefined,
+				typeNode
+			);
+		});
+
+		const typeAlias = ts.factory.createTypeAliasDeclaration(
+			undefined,
+			ts.factory.createIdentifier(`${componentName}Props`),
+			undefined,
+			ts.factory.createTypeLiteralNode(typeElements)
+		);
+		newComponentText += printer.printNode(ts.EmitHint.Unspecified, typeAlias, sourceFile) + '\n';
+	}
+
+	newComponentText += printer.printNode(ts.EmitHint.Unspecified, newComponentAst, sourceFile);
 	const replacementText = printer.printNode(ts.EmitHint.Unspecified, replacementAst, sourceFile);
 
 	const textChanges: ts.TextChange[] = [
