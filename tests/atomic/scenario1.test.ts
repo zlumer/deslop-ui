@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { test } from './test-utils';
-import { runCliRefactor } from '../src/refactor';
-import { runVisualRegression } from '../src/visual-regression';
+import { runCliRefactor } from '../../src/refactor';
+import { runVisualRegression } from '../../src/visual-regression';
 import path from 'path';
 
 test('Scenario 1: Happy Path Extraction (Content-Based Assertions)', async ({ testProjectDir }) =>

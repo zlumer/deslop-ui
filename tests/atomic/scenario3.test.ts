@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import { test } from './test-utils';
-import { runCliRefactor } from '../src/refactor';
+import { runCliRefactor } from '../../src/refactor';
 
 test('Scenario 3: Hook Purity Sorting', async ({ testProjectDir }) => {
   const result = await runCliRefactor('tests/test-project/src/components/DashboardWidget.tsx', { cwd: testProjectDir });

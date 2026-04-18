@@ -1,7 +1,7 @@
 import { expect, vi } from 'vitest';
 import { test } from './test-utils';
-import { runCliRefactor } from '../src/refactor';
-import * as visualRegression from '../src/visual-regression';
+import { runCliRefactor } from '../../src/refactor';
+import * as visualRegression from '../../src/visual-regression';
 
 vi.mock('../src/visual-regression');
 

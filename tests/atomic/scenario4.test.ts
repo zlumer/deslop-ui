@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import { test } from './test-utils';
-import { runCliRefactor } from '../src/refactor';
+import { runCliRefactor } from '../../src/refactor';
 
 test('Scenario 4: Inline State Mutation Hoisting', async ({ testProjectDir }) => {
   const result = await runCliRefactor('src/components/ToggleWidget.tsx', { cwd: testProjectDir });

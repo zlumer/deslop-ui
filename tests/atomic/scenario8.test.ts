@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import { test } from './test-utils';
-import { runCliRefactor } from '../src/refactor';
+import { runCliRefactor } from '../../src/refactor';
 
 test('Scenario 8: The Guard Clause (Leaf Nodes & Multiple Returns)', async ({ testProjectDir }) => {
   const result = await runCliRefactor('src/components/GuardedComponent.tsx', { cwd: testProjectDir });

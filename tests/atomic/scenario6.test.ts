@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import { test } from './test-utils';
-import { runCliRefactor } from '../src/refactor';
+import { runCliRefactor } from '../../src/refactor';
 
 test('Scenario 6: The innerRef Bypass', async ({ testProjectDir }) => {
   const result = await runCliRefactor('src/components/SearchInput.tsx', { cwd: testProjectDir });
