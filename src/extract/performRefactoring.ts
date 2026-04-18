@@ -23,7 +23,7 @@ export function performRefactoring(
 	let replacementAst: ts.JsxElement | ts.JsxSelfClosingElement;
 	const parameters: ts.ParameterDeclaration[] = [];
 
-	if (decisions.extractChildren && ts.isJsxElement(node)) {
+	if (!decisions.extractChildren && ts.isJsxElement(node)) {
 		// Add { children } to parameters
 		parameters.push(
 			ts.factory.createParameterDeclaration(
