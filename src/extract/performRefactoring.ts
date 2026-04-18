@@ -19,6 +19,49 @@ export function performRefactoring(
 	const componentName = decisions.componentName;
 	const node = request.astData.node;
 
+	let componentBody = node as ts.Expression;
+	let replacementAst: ts.JsxElement | ts.JsxSelfClosingElement;
+	const parameters: ts.ParameterDeclaration[] = [];
+
+	if (decisions.extractChildren && ts.isJsxElement(node)) {
+		// Add { children } to parameters
+		parameters.push(
+			ts.factory.createParameterDeclaration(
+				undefined,
+				undefined,
+				ts.factory.createObjectBindingPattern([
+					ts.factory.createBindingElement(undefined, undefined, 'children')
+				])
+			)
+		);
+
+		// Replace children in the extracted component with {children}
+		componentBody = ts.factory.updateJsxElement(
+			node,
+			node.openingElement,
+			[ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children'))],
+			node.closingElement
+		);
+
+		// Create replacement AST that wraps the original children
+		replacementAst = ts.factory.createJsxElement(
+			ts.factory.createJsxOpeningElement(
+				ts.factory.createIdentifier(componentName),
+				undefined,
+				ts.factory.createJsxAttributes([])
+			),
+			node.children,
+			ts.factory.createJsxClosingElement(ts.factory.createIdentifier(componentName))
+		);
+	} else {
+		// Create self-closing replacement AST
+		replacementAst = ts.factory.createJsxSelfClosingElement(
+			ts.factory.createIdentifier(componentName),
+			undefined,
+			ts.factory.createJsxAttributes([])
+		);
+	}
+
 	// Create new component AST as a VariableStatement (const Component = () => ...)
 	const newComponentAst = ts.factory.createVariableStatement(
 		undefined,
@@ -31,22 +74,15 @@ export function performRefactoring(
 					ts.factory.createArrowFunction(
 						undefined,
 						undefined,
-						[],
+						parameters,
 						undefined,
 						ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-						node as ts.Expression
+						componentBody
 					)
 				)
 			],
 			ts.NodeFlags.Const
 		)
-	);
-
-	// Create replacement AST
-	const replacementAst = ts.factory.createJsxSelfClosingElement(
-		ts.factory.createIdentifier(componentName),
-		undefined,
-		ts.factory.createJsxAttributes([])
 	);
 
 	// Create text changes
