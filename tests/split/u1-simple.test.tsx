@@ -55,7 +55,8 @@ const INPUT_CODE = `export const App = () => {
 	)
 }`;
 
-const EXPECTED_CODE = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>
+const EXPECTED_CODE = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>;
+
 export const App = () => {
 	return (
 		<div>
@@ -66,7 +67,7 @@ export const App = () => {
 	)
 }`;
 
-describe('Extract JSX Component Refactoring', () =>
+describe('[1-simple] Extract JSX Component Refactoring', () =>
 {
 	it('should successfully detect a <button> as an extraction candidate', () =>
 	{
