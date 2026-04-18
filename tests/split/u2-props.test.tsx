@@ -85,7 +85,6 @@ describe('[2-props]', () =>
 		expect(decisionsRequest.props).toHaveLength(2);
 		expect(decisionsRequest.props.map(p => p.name)).toEqual(expect.arrayContaining(['userName', 'age']));
 		expect(decisionsRequest.hasChildren).toBe(true); // It has an <h2> and <p> child, but no direct text content
-		console.log(decisionsRequest.childrenNodes)
 		expect(decisionsRequest.childrenNodes.length).toBe(2);
 
 
