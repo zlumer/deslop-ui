@@ -1,21 +1,11 @@
-export function equals(a: string, b: string): boolean {
-  const normalize = (str: string) => {
-    // Remove all whitespace
-    let s = str.replace(/\s+/g, '');
-    
-    // Normalize interface to type
-    s = s.replace(/interface(\w+){/g, 'type$1={');
-    
-    // Remove all optional terminators, separators, and wrapping punctuation
-    s = s.replace(/[,;()]/g, '');
-    
-    // Normalize specific property orderings found in the tests
-    // Since we've already removed commas and semicolons, we match the concatenated strings
-    s = s.replace(/\{userName:stringage:number\}/g, '{age:numberuserName:string}');
-    s = s.replace(/\{userNameage\}/g, '{ageuserName}');
-    
-    return s;
-  };
-
-  return normalize(a) === normalize(b);
+/**
+ * Uses TypeScript AST to compare two code snippets for "fuzzy" equality, ignoring formatting and minor differences.
+ * This is used in tests to verify that the refactored code is semantically the same as the expected code, even if whitespace or formatting differs.
+ * This also equals `type` and `interface` declarations that have the same properties.
+ * @param a 
+ * @param b 
+ */
+export function equals(a: string, b: string): boolean
+{
+	throw new Error('Not implemented')
 }
