@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import * as ts from 'typescript';
-import { applyTextChanges, detectComponents, detectPropsList, performRefactoring } from '../../src/extract';
-import { RefactorDecisions } from '../../src/extract.types';
+import { applyTextChanges } from '../../src/extract/applyTextChanges';
+import { performRefactoring } from '../../src/extract/performRefactoring';
+import { detectPropsList } from '../../src/extract/detectPropsList';
+import { detectComponents } from '../../src/extract/detectComponents';
+import { RefactorDecisions } from '../../src/extract/types';
 
 function prepareTS(inputCode: string)
 {
