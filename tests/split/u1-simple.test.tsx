@@ -1,0 +1,153 @@
+import { describe, it, expect } from 'vitest';
+import * as ts from 'typescript';
+import {
+    detectComponents, 
+    detectPropsList, 
+    performRefactoring,
+} from '../../src/extract';
+import {
+    ExtractionCandidates,
+    DecisionsRequest,
+    RefactorDecisions,
+    RefactorResult
+} from '../../src/extract.types';
+
+function prepareTS(inputCode: string)
+{
+	const fileName = 'App.tsx';
+	const compilerOptions: ts.CompilerOptions = {
+		target: ts.ScriptTarget.Latest,
+		jsx: ts.JsxEmit.React,
+		module: ts.ModuleKind.CommonJS
+	};
+
+	const host = ts.createCompilerHost(compilerOptions);
+	const originalGetSourceFile = host.getSourceFile;
+
+	// Intercept filesystem calls to serve our in-memory code
+	host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) =>
+	{
+		if (name === fileName)
+		{
+			return ts.createSourceFile(fileName, inputCode, languageVersion, true, ts.ScriptKind.TSX);
+		}
+		return originalGetSourceFile(name, languageVersion, onError, shouldCreateNewSourceFile);
+	};
+
+	const program = ts.createProgram([fileName], compilerOptions, host);
+	const typeChecker = program.getTypeChecker();
+	const sourceFile = program.getSourceFile(fileName);
+
+	if (!sourceFile)
+	{
+		throw new Error("Failed to generate SourceFile");
+	}
+	return { sourceFile, typeChecker };
+}
+
+describe('Extract JSX Component Refactoring', () => {
+    it('should successfully extract a <button> into a SubmitButton component', () => {
+        // -------------------------------------------------------------------
+        // SETUP: Define inputs, outputs, and create a TS Program
+        // -------------------------------------------------------------------
+        const inputCode = `export const App = () => {
+	return (
+		<div>
+			<h1>Welcome</h1>
+			{/* Target: Extract <button> into \`SubmitButton\` */}
+			<button className="btn-primary">Submit Form</button>
+		</div>
+	)
+}`;
+
+        const expectedCode = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>
+export const App = () => {
+	return (
+		<div>
+			<h1>Welcome</h1>
+			{/* Target: Extract <button> into \`SubmitButton\` */}
+			<SubmitButton />
+		</div>
+	)
+}`;
+
+        // Set up an in-memory TypeScript program to get AST and TypeChecker
+        const { sourceFile, typeChecker } = prepareTS(inputCode);
+
+        // Find the text offsets for: <button className="btn-primary">Submit Form</button>
+        const buttonStart = inputCode.indexOf('<button');
+        const buttonEnd = inputCode.indexOf('</button>') + '</button>'.length;
+        const selection = { start: buttonStart, end: buttonEnd };
+
+
+        // -------------------------------------------------------------------
+        // STEP 1: Detect Components
+        // -------------------------------------------------------------------
+        const candidates = detectComponents(sourceFile, selection) satisfies ExtractionCandidates
+        
+        // Assertions for Step 1
+        expect(candidates.length).toBeGreaterThanOrEqual(1);
+        expect(candidates[0].node.kind).toBe(ts.SyntaxKind.JsxElement);
+        expect(candidates[0].description).toContain('<button');
+
+
+        // -------------------------------------------------------------------
+        // STEP 2: Detect Props and Context
+        // -------------------------------------------------------------------
+        const decisionsRequest: DecisionsRequest = detectPropsList(
+            sourceFile, 
+            typeChecker, 
+            candidates[0]
+        );
+
+        // Assertions for Step 2
+        // Since the <button> uses no external variables from App(), props should be empty
+        expect(decisionsRequest.props).toHaveLength(0);
+        // It has a text child: "Submit Form"
+        expect(decisionsRequest.hasChildren).toBe(true);
+        expect(decisionsRequest.childrenNodes.length).toBe(1);
+        expect(decisionsRequest.childrenNodes[0].kind).toBe(ts.SyntaxKind.JsxText);
+
+
+        // -------------------------------------------------------------------
+        // STEP 3: Perform Refactor
+        // -------------------------------------------------------------------
+        const decisions = {
+            componentName: 'SubmitButton',
+            extractChildren: true, // User decides to hardcode "Submit Form" into the new component
+            selectedProps: []      // No props to pass
+        } satisfies RefactorDecisions
+
+        const result = performRefactoring(
+            sourceFile, 
+            decisionsRequest, 
+            decisions
+        )
+
+        // Assertions for Step 3
+        expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const SubmitButton = ...
+        expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxSelfClosingElement); // <SubmitButton />
+        
+        // Apply TextChanges to the original string to verify the final output
+        const finalSourceCode = applyTextChanges(inputCode, result.textChanges);
+        expect(finalSourceCode).toBe(expectedCode);
+    });
+});
+
+/**
+ * Utility function to apply TS compiler TextChanges to a source string.
+ * Changes must be applied from the bottom of the file to the top (reverse offset order)
+ * so that earlier offset replacements do not invalidate later offset positions.
+ */
+function applyTextChanges(source: string, changes: ts.TextChange[]): string {
+    const sortedChanges = [...changes].sort((a, b) => b.span.start - a.span.start);
+    let result = source;
+    
+    for (const change of sortedChanges) {
+        const head = result.slice(0, change.span.start);
+        const tail = result.slice(change.span.start + change.span.length);
+        result = head + change.newText + tail;
+    }
+    
+    return result;
+}
