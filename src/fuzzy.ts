@@ -73,15 +73,15 @@ function normalizeNode(node: ts.Node): any {
 		result.members = normalizeArray(node.members);
 	} else if (ts.isPropertySignature(node)) {
 		result.name = normalizeNode(node.name);
-		result.type = normalizeNode(node.type);
+		result.type = normalizeNode(node.type!);
 	} else if (ts.isVariableStatement(node)) {
 		result.declarations = normalizeArray(node.declarationList.declarations);
 	} else if (ts.isVariableDeclaration(node)) {
 		result.name = normalizeNode(node.name);
-		result.initializer = normalizeNode(node.initializer);
+		result.initializer = normalizeNode(node.initializer!);
 	} else if (ts.isArrowFunction(node) || ts.isFunctionDeclaration(node)) {
 		result.parameters = normalizeArray(node.parameters);
-		result.body = normalizeNode(node.body);
+		result.body = normalizeNode(node.body!);
 	} else if (ts.isParameter(node)) {
 		result.name = normalizeNode(node.name);
 	} else if (ts.isObjectBindingPattern(node)) {
@@ -101,7 +101,7 @@ function normalizeNode(node: ts.Node): any {
 		result.properties = normalizeArray(node.properties);
 	} else if (ts.isJsxAttribute(node)) {
 		result.name = normalizeNode(node.name);
-		result.initializer = normalizeNode(node.initializer);
+		result.initializer = normalizeNode(node.initializer!);
 	} else if (ts.isJsxExpression(node)) {
 		result.expression = normalizeNode(node.expression!);
 	} else if (ts.isReturnStatement(node)) {
@@ -110,7 +110,7 @@ function normalizeNode(node: ts.Node): any {
 		result.statements = normalizeArray(node.statements);
 	} else if (ts.isSourceFile(node)) {
 		result.statements = normalizeArray(node.statements);
-	} else if (ts.isExportModifier(node)) {
+	} else if (ts.isModifier(node)) {
 		result.kind = node.kind;
 	} else {
 		// Fallback: process children
