@@ -67,7 +67,7 @@ export interface RefactorDecisions {
     /** The name for the new component (e.g., "SubmitButton") */
     componentName: string;
     /** True to hardcode children in the new component, False to pass them as <Comp>{children}</Comp> */
-    extractChildren: boolean;
+    hardcodeChildren: boolean;
     /** Which props the user actually decided to pass down */
     selectedProps: string[];
 }

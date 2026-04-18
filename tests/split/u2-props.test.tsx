@@ -5,6 +5,7 @@ import { detectPropsList } from '../../src/extract/detectPropsList';
 import { detectComponents } from '../../src/extract/detectComponents';
 import { RefactorDecisions } from '../../src/extract/types';
 import { sft } from './utils';
+import { applyTextChanges } from '../../src/extract/applyTextChanges';
 
 const INPUT_CODE = `export const UserProfile = () =>
 {
@@ -93,7 +94,7 @@ describe('[2-props]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'UserInfo',
-			extractChildren: false, // No children to extract
+			hardcodeChildren: false, // No children to extract
 			selectedProps: ['userName', 'age'] // Pass detected props
 		} satisfies RefactorDecisions
 
@@ -102,6 +103,7 @@ describe('[2-props]', () =>
 			decisionsRequest,
 			decisions
 		)
+		// console.log(applyTextChanges(INPUT_CODE, result.textChanges))
 
 		// Assertions for Step 3
 		expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const UserInfo = ...

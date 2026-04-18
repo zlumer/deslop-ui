@@ -24,7 +24,7 @@ export function performRefactoring(
 	const parameters: ts.ParameterDeclaration[] = [];
 	let typeAnnotation: ts.TypeNode;
 
-	if (!decisions.extractChildren && ts.isJsxElement(node)) {
+	if (!decisions.hardcodeChildren && ts.isJsxElement(node)) {
 		// Add { children } to parameters
 		parameters.push(
 			ts.factory.createParameterDeclaration(
