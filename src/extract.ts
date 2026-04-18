@@ -51,7 +51,24 @@ export function detectPropsList(
     astData: ExtractionCandidate
 ): DecisionsRequest
 {
-	throw new Error('Not implemented yet');
+    const node = astData.node;
+    let hasChildren = false;
+    let childrenNodes: ts.JsxChild[] = [];
+
+    if (ts.isJsxElement(node)) {
+        hasChildren = node.children.length > 0;
+        childrenNodes = Array.from(node.children);
+    } else if (ts.isJsxFragment(node)) {
+        hasChildren = node.children.length > 0;
+        childrenNodes = Array.from(node.children);
+    }
+
+    return {
+        astData,
+        props: [],
+        hasChildren,
+        childrenNodes
+    };
 }
 
 /**
