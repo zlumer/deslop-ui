@@ -1,16 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as ts from 'typescript';
-import
-	{
-		detectComponents,
-		detectPropsList,
-		performRefactoring,
-	} from '../../src/extract';
-import
-	{
-		ExtractionCandidates,
-		RefactorDecisions,
-	} from '../../src/extract.types';
+import { detectComponents, detectPropsList, performRefactoring } from '../../src/extract';
+import { RefactorDecisions } from '../../src/extract.types';
 
 function prepareTS(inputCode: string)
 {
