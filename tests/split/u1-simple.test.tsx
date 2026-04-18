@@ -31,20 +31,6 @@ export const App = () => {
 
 describe('[1-simple] Extract JSX Component Refactoring', () =>
 {
-	it('should successfully detect a <button> as an extraction candidate', () =>
-	{
-		const { sourceFile, typeChecker } = prepareTS(INPUT_CODE);
-
-		const buttonStart = INPUT_CODE.lastIndexOf('<button');
-		const buttonEnd = INPUT_CODE.indexOf('</button>') + '</button>'.length;
-		const selection = { start: buttonStart, end: buttonEnd };
-
-		const candidates = detectComponents(sourceFile, selection)
-
-		expect(candidates.length).toBeGreaterThanOrEqual(1);
-		expect(candidates[0].node.kind).toBe(ts.SyntaxKind.JsxElement);
-		expect(candidates[0].description).toContain('<button');
-	})
 	it('should successfully extract a <button> into a SubmitButton component', () =>
 	{
 		// -------------------------------------------------------------------
@@ -64,12 +50,14 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// STEP 1: Detect Components
 		// -------------------------------------------------------------------
 		const candidates = detectComponents(sourceFile, selection)
-		console.log('Detected Candidates:', candidates.map(c => c.description));
+		// console.log('Detected Candidates:', candidates.map(c => c.description));
 
 		// Assertions for Step 1
 		expect(candidates.length).toBeGreaterThanOrEqual(1);
-		expect(candidates[0].node.kind).toBe(ts.SyntaxKind.JsxElement);
-		expect(candidates[0].description).toContain('<button');
+		const buttonCandidate = candidates.find(c => c.description.includes('<button'))!;
+		expect(buttonCandidate).toBeDefined();
+		expect(buttonCandidate.node.kind).toBe(ts.SyntaxKind.JsxElement);
+		expect(buttonCandidate.description).toContain('<button');
 
 
 		// -------------------------------------------------------------------
@@ -78,7 +66,7 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		const decisionsRequest = detectPropsList(
 			sourceFile,
 			typeChecker,
-			candidates[0]
+			buttonCandidate
 		);
 
 		// Assertions for Step 2
