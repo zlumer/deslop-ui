@@ -1,3 +1,5 @@
+import * as ts from 'typescript';
+
 /**
  * Uses TypeScript AST to compare two code snippets for "fuzzy" equality, ignoring formatting and minor differences.
  * This is used in tests to verify that the refactored code is semantically the same as the expected code, even if whitespace or formatting differs.
@@ -5,7 +7,118 @@
  * @param a 
  * @param b 
  */
-export function equals(a: string, b: string): boolean
-{
-	throw new Error('Not implemented')
+export function equals(a: string, b: string): boolean {
+	const sourceA = ts.createSourceFile('a.tsx', a, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+	const sourceB = ts.createSourceFile('b.tsx', b, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+
+	const normA = normalizeNode(sourceA);
+	const normB = normalizeNode(sourceB);
+
+	return JSON.stringify(normA) === JSON.stringify(normB);
+}
+
+function normalizeNode(node: ts.Node): any {
+	if (!node) return null;
+
+	// Ignore tokens that are just syntax/formatting (like commas, semicolons)
+	if (node.kind === ts.SyntaxKind.CommaToken || node.kind === ts.SyntaxKind.SemicolonToken) {
+		return null;
+	}
+
+	const result: any = {};
+
+	// Normalize Interface to TypeAlias for comparison
+	if (ts.isInterfaceDeclaration(node)) {
+		result.kind = ts.SyntaxKind.TypeAliasDeclaration;
+		result.name = normalizeNode(node.name);
+		result.type = {
+			kind: ts.SyntaxKind.TypeLiteral,
+			members: normalizeArray(node.members)
+		};
+		return result;
+	}
+
+	result.kind = node.kind;
+
+	if (ts.isIdentifier(node)) {
+		result.text = node.text;
+	} else if (ts.isStringLiteral(node) || ts.isNumericLiteral(node) || ts.isJsxText(node)) {
+		result.text = node.text.trim();
+	}
+
+	// Extract relevant properties based on node type
+	if (ts.isTypeAliasDeclaration(node)) {
+		result.name = normalizeNode(node.name);
+		result.type = normalizeNode(node.type);
+	} else if (ts.isTypeLiteralNode(node)) {
+		result.members = normalizeArray(node.members);
+	} else if (ts.isPropertySignature(node)) {
+		result.name = normalizeNode(node.name);
+		result.type = normalizeNode(node.type);
+	} else if (ts.isVariableStatement(node)) {
+		result.declarations = normalizeArray(node.declarationList.declarations);
+	} else if (ts.isVariableDeclaration(node)) {
+		result.name = normalizeNode(node.name);
+		result.initializer = normalizeNode(node.initializer);
+	} else if (ts.isArrowFunction(node) || ts.isFunctionDeclaration(node)) {
+		result.parameters = normalizeArray(node.parameters);
+		result.body = normalizeNode(node.body);
+	} else if (ts.isParameter(node)) {
+		result.name = normalizeNode(node.name);
+	} else if (ts.isObjectBindingPattern(node)) {
+		result.elements = normalizeArray(node.elements);
+	} else if (ts.isBindingElement(node)) {
+		result.name = normalizeNode(node.name);
+	} else if (ts.isJsxElement(node)) {
+		result.openingElement = normalizeNode(node.openingElement);
+		result.children = normalizeArray(node.children);
+	} else if (ts.isJsxSelfClosingElement(node)) {
+		result.tagName = normalizeNode(node.tagName);
+		result.attributes = normalizeNode(node.attributes);
+	} else if (ts.isJsxOpeningElement(node)) {
+		result.tagName = normalizeNode(node.tagName);
+		result.attributes = normalizeNode(node.attributes);
+	} else if (ts.isJsxAttributes(node)) {
+		result.properties = normalizeArray(node.properties);
+	} else if (ts.isJsxAttribute(node)) {
+		result.name = normalizeNode(node.name);
+		result.initializer = normalizeNode(node.initializer);
+	} else if (ts.isJsxExpression(node)) {
+		result.expression = normalizeNode(node.expression);
+	} else if (ts.isReturnStatement(node)) {
+		result.expression = normalizeNode(node.expression);
+	} else if (ts.isParenthesizedExpression(node)) {
+		// Unwrap parentheses
+		return normalizeNode(node.expression);
+	} else if (ts.isBlock(node)) {
+		result.statements = normalizeArray(node.statements);
+	} else if (ts.isSourceFile(node)) {
+		result.statements = normalizeArray(node.statements);
+	} else if (ts.isExportModifier(node)) {
+		result.kind = node.kind;
+	} else {
+		// Fallback: process children
+		const children: any[] = [];
+		ts.forEachChild(node, child => {
+			const normalized = normalizeNode(child);
+			if (normalized) children.push(normalized);
+		});
+		if (children.length > 0) {
+			result.children = children;
+		}
+	}
+
+	return result;
+}
+
+function normalizeArray(nodes: ts.NodeArray<ts.Node> | readonly ts.Node[]): any[] {
+	if (!nodes) return [];
+	const arr = nodes.map(normalizeNode).filter(n => n !== null && (n.kind !== ts.SyntaxKind.JsxText || n.text !== ''));
+	
+	// Sort members/properties to ignore ordering differences
+	if (arr.length > 0 && (arr[0].kind === ts.SyntaxKind.PropertySignature || arr[0].kind === ts.SyntaxKind.BindingElement || arr[0].kind === ts.SyntaxKind.JsxAttribute)) {
+		arr.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+	}
+	
+	return arr;
 }
