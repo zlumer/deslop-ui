@@ -20,14 +20,15 @@ export function detectPropsList(
 	let hasChildren = false;
 	let childrenNodes: ts.JsxChild[] = [];
 
-	if (ts.isJsxElement(node))
+	if (ts.isJsxElement(node) || ts.isJsxFragment(node))
 	{
-		hasChildren = node.children.length > 0;
-		childrenNodes = Array.from(node.children);
-	} else if (ts.isJsxFragment(node))
-	{
-		hasChildren = node.children.length > 0;
-		childrenNodes = Array.from(node.children);
+		childrenNodes = Array.from(node.children).filter(child => {
+			if (ts.isJsxText(child)) {
+				return child.text.trim().length > 0;
+			}
+			return true;
+		});
+		hasChildren = childrenNodes.length > 0;
 	}
 
 	const propsMap = new Map<string, PropCandidate>();
