@@ -7,7 +7,6 @@ import {
 } from '../../src/extract';
 import {
     ExtractionCandidates,
-    DecisionsRequest,
     RefactorDecisions,
 } from '../../src/extract.types';
 
