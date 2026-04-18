@@ -84,9 +84,9 @@ describe('[2-props]', () =>
 		// Since the <div> uses external variables from UserProfile, props should be detected
 		expect(decisionsRequest.props).toHaveLength(2);
 		expect(decisionsRequest.props.map(p => p.name)).toEqual(expect.arrayContaining(['userName', 'age']));
-		// It has no text child
-		expect(decisionsRequest.hasChildren).toBe(false);
-		expect(decisionsRequest.childrenNodes.length).toBe(0);
+		expect(decisionsRequest.hasChildren).toBe(true); // It has an <h2> and <p> child, but no direct text content
+		console.log(decisionsRequest.childrenNodes)
+		expect(decisionsRequest.childrenNodes.length).toBe(2);
 
 
 		// -------------------------------------------------------------------
