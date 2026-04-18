@@ -17,7 +17,7 @@ const INPUT_CODE = `export const App = () => {
 	)
 }`;
 
-const BUTTON_WITH_TEXT = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>;
+const BUTTON_WITH_TEXT = `const SubmitButton: React.FC = () => <button className="btn-primary">Submit Form</button>;
 
 export const App = () => {
 	return (
@@ -29,7 +29,7 @@ export const App = () => {
 	)
 }`
 
-const BUTTON_NO_TEXT = `const SubmitButton = ({ children }) => <button className="btn-primary">{children}</button>;
+const BUTTON_NO_TEXT = `const SubmitButton: React.FC<React.PropsWithChildren> = ({ children }) => <button className="btn-primary">{children}</button>;
 
 export const App = () => {
 	return (
@@ -41,7 +41,7 @@ export const App = () => {
 	)
 }`
 
-const H1_WTEXT = `const Heading = () => <h1>Welcome</h1>;
+const H1_WTEXT = `const Heading: React.FC = () => <h1>Welcome</h1>;
 
 export const App = () => {
 	return (
@@ -53,7 +53,7 @@ export const App = () => {
 	)
 }`
 
-const H1_NOTEXT = `const Heading = ({ children }) => <h1>{children}</h1>;
+const H1_NOTEXT = `const Heading: React.FC<React.PropsWithChildren> = ({ children }) => <h1>{children}</h1>;
 
 export const App = () => {
 	return (
