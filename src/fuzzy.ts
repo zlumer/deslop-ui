@@ -20,9 +20,23 @@ export function equals(a: string, b: string): boolean {
 function normalizeNode(node: ts.Node): any {
 	if (!node) return null;
 
-	// Ignore tokens that are just syntax/formatting (like commas, semicolons)
-	if (node.kind === ts.SyntaxKind.CommaToken || node.kind === ts.SyntaxKind.SemicolonToken) {
+	// Ignore tokens that are just syntax/formatting
+	if (
+		node.kind === ts.SyntaxKind.CommaToken ||
+		node.kind === ts.SyntaxKind.SemicolonToken ||
+		node.kind === ts.SyntaxKind.EndOfFileToken
+	) {
 		return null;
+	}
+
+	// Unwrap parentheses
+	if (ts.isParenthesizedExpression(node)) {
+		return normalizeNode(node.expression);
+	}
+
+	// Unwrap blocks with a single return statement
+	if (ts.isBlock(node) && node.statements.length === 1 && ts.isReturnStatement(node.statements[0])) {
+		return normalizeNode(node.statements[0].expression!);
 	}
 
 	const result: any = {};
@@ -42,8 +56,13 @@ function normalizeNode(node: ts.Node): any {
 
 	if (ts.isIdentifier(node)) {
 		result.text = node.text;
-	} else if (ts.isStringLiteral(node) || ts.isNumericLiteral(node) || ts.isJsxText(node)) {
+		return result;
+	}
+
+	if (ts.isStringLiteral(node) || ts.isNumericLiteral(node) || ts.isJsxText(node)) {
 		result.text = node.text.trim();
+		if (result.text === '') return null;
+		return result;
 	}
 
 	// Extract relevant properties based on node type
@@ -84,12 +103,9 @@ function normalizeNode(node: ts.Node): any {
 		result.name = normalizeNode(node.name);
 		result.initializer = normalizeNode(node.initializer);
 	} else if (ts.isJsxExpression(node)) {
-		result.expression = normalizeNode(node.expression);
+		result.expression = normalizeNode(node.expression!);
 	} else if (ts.isReturnStatement(node)) {
-		result.expression = normalizeNode(node.expression);
-	} else if (ts.isParenthesizedExpression(node)) {
-		// Unwrap parentheses
-		return normalizeNode(node.expression);
+		result.expression = normalizeNode(node.expression!);
 	} else if (ts.isBlock(node)) {
 		result.statements = normalizeArray(node.statements);
 	} else if (ts.isSourceFile(node)) {
@@ -113,7 +129,7 @@ function normalizeNode(node: ts.Node): any {
 
 function normalizeArray(nodes: ts.NodeArray<ts.Node> | readonly ts.Node[]): any[] {
 	if (!nodes) return [];
-	const arr = nodes.map(normalizeNode).filter(n => n !== null && (n.kind !== ts.SyntaxKind.JsxText || n.text !== ''));
+	const arr = nodes.map(normalizeNode).filter(n => n !== null);
 	
 	// Sort members/properties to ignore ordering differences
 	if (arr.length > 0 && (arr[0].kind === ts.SyntaxKind.PropertySignature || arr[0].kind === ts.SyntaxKind.BindingElement || arr[0].kind === ts.SyntaxKind.JsxAttribute)) {
