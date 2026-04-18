@@ -9,7 +9,6 @@ import {
     ExtractionCandidates,
     DecisionsRequest,
     RefactorDecisions,
-    RefactorResult
 } from '../../src/extract.types';
 
 function prepareTS(inputCode: string)
@@ -45,12 +44,7 @@ function prepareTS(inputCode: string)
 	return { sourceFile, typeChecker };
 }
 
-describe('Extract JSX Component Refactoring', () => {
-    it('should successfully extract a <button> into a SubmitButton component', () => {
-        // -------------------------------------------------------------------
-        // SETUP: Define inputs, outputs, and create a TS Program
-        // -------------------------------------------------------------------
-        const inputCode = `export const App = () => {
+const INPUT_CODE = `export const App = () => {
 	return (
 		<div>
 			<h1>Welcome</h1>
@@ -60,7 +54,7 @@ describe('Extract JSX Component Refactoring', () => {
 	)
 }`;
 
-        const expectedCode = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>
+const EXPECTED_CODE = `const SubmitButton = () => <button className="btn-primary">Submit Form</button>
 export const App = () => {
 	return (
 		<div>
@@ -71,12 +65,18 @@ export const App = () => {
 	)
 }`;
 
+describe('Extract JSX Component Refactoring', () => {
+    it('should successfully extract a <button> into a SubmitButton component', () => {
+        // -------------------------------------------------------------------
+        // SETUP: Define inputs, outputs, and create a TS Program
+        // -------------------------------------------------------------------
+
         // Set up an in-memory TypeScript program to get AST and TypeChecker
-        const { sourceFile, typeChecker } = prepareTS(inputCode);
+        const { sourceFile, typeChecker } = prepareTS(INPUT_CODE);
 
         // Find the text offsets for: <button className="btn-primary">Submit Form</button>
-        const buttonStart = inputCode.indexOf('<button');
-        const buttonEnd = inputCode.indexOf('</button>') + '</button>'.length;
+        const buttonStart = INPUT_CODE.indexOf('<button');
+        const buttonEnd = INPUT_CODE.indexOf('</button>') + '</button>'.length;
         const selection = { start: buttonStart, end: buttonEnd };
 
 
@@ -130,8 +130,8 @@ export const App = () => {
         expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxSelfClosingElement); // <SubmitButton />
         
         // Apply TextChanges to the original string to verify the final output
-        const finalSourceCode = applyTextChanges(inputCode, result.textChanges);
-        expect(finalSourceCode).toBe(expectedCode);
+        const finalSourceCode = applyTextChanges(INPUT_CODE, result.textChanges);
+        expect(finalSourceCode).toBe(EXPECTED_CODE);
     });
 });
 
