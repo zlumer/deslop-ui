@@ -22,6 +22,7 @@ export function performRefactoring(
 	let componentBody = node as ts.Expression;
 	let replacementAst: ts.JsxElement | ts.JsxSelfClosingElement;
 	const parameters: ts.ParameterDeclaration[] = [];
+	let typeAnnotation: ts.TypeNode;
 
 	if (!decisions.extractChildren && ts.isJsxElement(node)) {
 		// Add { children } to parameters
@@ -33,6 +34,22 @@ export function performRefactoring(
 					ts.factory.createBindingElement(undefined, undefined, 'children')
 				])
 			)
+		);
+
+		typeAnnotation = ts.factory.createTypeReferenceNode(
+			ts.factory.createQualifiedName(
+				ts.factory.createIdentifier('React'),
+				ts.factory.createIdentifier('FC')
+			),
+			[
+				ts.factory.createTypeReferenceNode(
+					ts.factory.createQualifiedName(
+						ts.factory.createIdentifier('React'),
+						ts.factory.createIdentifier('PropsWithChildren')
+					),
+					undefined
+				)
+			]
 		);
 
 		// Replace children in the extracted component with {children}
@@ -54,6 +71,14 @@ export function performRefactoring(
 			ts.factory.createJsxClosingElement(ts.factory.createIdentifier(componentName))
 		);
 	} else {
+		typeAnnotation = ts.factory.createTypeReferenceNode(
+			ts.factory.createQualifiedName(
+				ts.factory.createIdentifier('React'),
+				ts.factory.createIdentifier('FC')
+			),
+			undefined
+		);
+
 		// Create self-closing replacement AST
 		replacementAst = ts.factory.createJsxSelfClosingElement(
 			ts.factory.createIdentifier(componentName),
@@ -70,7 +95,7 @@ export function performRefactoring(
 				ts.factory.createVariableDeclaration(
 					ts.factory.createIdentifier(componentName),
 					undefined,
-					undefined,
+					typeAnnotation,
 					ts.factory.createArrowFunction(
 						undefined,
 						undefined,
