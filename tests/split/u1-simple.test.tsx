@@ -67,7 +67,7 @@ export const App = () => {
 
 describe('[1-simple] Extract JSX Component Refactoring', () =>
 {
-	sft('should successfully extract a <button> into a SubmitButton component', INPUT_CODE, BUTTON_WITH_TEXT, ({
+	sft('should extract <button> into SubmitButton', INPUT_CODE, BUTTON_WITH_TEXT, ({
 		inputCode,
 		sourceFile,
 		typeChecker,
@@ -132,7 +132,7 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 
 		return result
 	});
-	sft('should extract text content into children prop if user opts to make it dynamic', INPUT_CODE, BUTTON_NO_TEXT, ({
+	sft('should extract <button> into SubmitButton (with children)', INPUT_CODE, BUTTON_NO_TEXT, ({
 		inputCode,
 		sourceFile,
 		typeChecker,
