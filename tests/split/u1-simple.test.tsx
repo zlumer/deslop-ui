@@ -198,4 +198,106 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 
 		return result
 	});
+	sft('should extract <h1> into Heading (with children)', INPUT_CODE, H1_NOTEXT, ({
+		inputCode,
+		sourceFile,
+		typeChecker,
+	}) =>
+	{
+		// Find the text offsets for: <h1>Header</h1>
+		const h1Start = inputCode.lastIndexOf('<h1');
+		const h1End = inputCode.indexOf('</h1>') + '</h1>'.length;
+		const selection = { start: h1Start, end: h1End };
+
+
+		// -------------------------------------------------------------------
+		// STEP 1: Detect Components
+		// -------------------------------------------------------------------
+		const candidates = detectComponents(sourceFile, selection)
+		const h1Candidate = candidates.find(c => c.description.includes('<h1'))!;
+
+
+		// -------------------------------------------------------------------
+		// STEP 2: Detect Props and Context
+		// -------------------------------------------------------------------
+		const decisionsRequest = detectPropsList(
+			sourceFile,
+			typeChecker,
+			h1Candidate
+		);
+
+
+		// -------------------------------------------------------------------
+		// STEP 3: Perform Refactor
+		// -------------------------------------------------------------------
+		const decisions = {
+			componentName: 'Heading',
+			extractChildren: false,
+			selectedProps: []      // No props to pass
+		} satisfies RefactorDecisions
+
+		const result = performRefactoring(
+			sourceFile,
+			decisionsRequest,
+			decisions
+		)
+		// console.log(applyTextChanges(INPUT_CODE, result.textChanges))
+
+		// Assertions for Step 3
+		expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const Heading = ...
+		expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxElement); // <Heading>...</Heading>
+
+		return result
+	});
+	sft('should extract <h1> into Heading', INPUT_CODE, H1_WTEXT, ({
+		inputCode,
+		sourceFile,
+		typeChecker,
+	}) =>
+	{
+		// Find the text offsets for: <h1>Header</h1>
+		const h1Start = inputCode.lastIndexOf('<h1');
+		const h1End = inputCode.indexOf('</h1>') + '</h1>'.length;
+		const selection = { start: h1Start, end: h1End };
+
+
+		// -------------------------------------------------------------------
+		// STEP 1: Detect Components
+		// -------------------------------------------------------------------
+		const candidates = detectComponents(sourceFile, selection)
+		const h1Candidate = candidates.find(c => c.description.includes('<h1'))!;
+
+
+		// -------------------------------------------------------------------
+		// STEP 2: Detect Props and Context
+		// -------------------------------------------------------------------
+		const decisionsRequest = detectPropsList(
+			sourceFile,
+			typeChecker,
+			h1Candidate
+		);
+
+
+		// -------------------------------------------------------------------
+		// STEP 3: Perform Refactor
+		// -------------------------------------------------------------------
+		const decisions = {
+			componentName: 'Heading',
+			extractChildren: true,
+			selectedProps: []      // No props to pass
+		} satisfies RefactorDecisions
+
+		const result = performRefactoring(
+			sourceFile,
+			decisionsRequest,
+			decisions
+		)
+		console.log(applyTextChanges(INPUT_CODE, result.textChanges))
+
+		// Assertions for Step 3
+		expect(result.newComponentAst.kind).toBe(ts.SyntaxKind.VariableStatement); // const Heading = ...
+		expect(result.replacementAst.kind).toBe(ts.SyntaxKind.JsxSelfClosingElement); // <Heading />
+
+		return result
+	});
 });
