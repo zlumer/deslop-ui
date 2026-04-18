@@ -1,3 +1,3 @@
-import { equals as eq } from "typescript-equals"
-
-export const equals = eq
+export function equals(a: string, b: string): boolean {
+  return a.replace(/\s+/g, '') === b.replace(/\s+/g, '');
+}
