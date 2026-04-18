@@ -24,7 +24,8 @@ function normalizeNode(node: ts.Node): any {
 	if (
 		node.kind === ts.SyntaxKind.CommaToken ||
 		node.kind === ts.SyntaxKind.SemicolonToken ||
-		node.kind === ts.SyntaxKind.EndOfFileToken
+		node.kind === ts.SyntaxKind.EndOfFileToken ||
+		node.kind === ts.SyntaxKind.EmptyStatement
 	) {
 		return null;
 	}
