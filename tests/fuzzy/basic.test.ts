@@ -105,6 +105,12 @@ const REACT_PROPS = [
 	`const x: React.FC<{}> = (props) => (<span/>)`,
 	`const x = (props) => <span/>`,
 	`const x = (props) => <span/>`,
+	`const x = (props) => <span/>`,
+]
+const REACT_PROPS_D = [
+	`const x: React.FC<{ x: number }> = (props) => (<span/>)`,
+	`const x = (props: { y: number }) => <span/>`,
+	`const x: React.FC<React.PropsWithChildren> = (props) => (<span/>)`,
 ]
 
 function matrix<T>(arr1: T[], arr2: T[])
@@ -192,5 +198,11 @@ describe('code fuzzy equal', () =>
 		for (let [a,b] of matrix(REACT_PROPS, REACT_PROPS))
 			if (!equals(a,b))
 				expect(a).toBe(b)
+	})
+	it('react-props-different', () =>
+	{
+		for (let [a,b] of matrix(REACT_PROPS, REACT_PROPS_D))
+			if (equals(a,b))
+				console.log(a, "\n", b), expect(a).not.toBe(b)
 	})
 })
