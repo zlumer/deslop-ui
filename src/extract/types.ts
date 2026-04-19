@@ -73,7 +73,7 @@ export interface RefactorDecisions {
      * These contiguous sibling nodes will be replaced with `{children}` in the extracted component,
      * and will be passed as children to the new component instance.
      */
-    childrenReplacementNodes?: ts.JsxChild[];
+    childrenReplacementNodes: ts.JsxChild[];
 }
 
 export interface RefactorResult {
