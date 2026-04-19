@@ -77,11 +77,12 @@ function normalizeNode(node: any): any {
 
 	// Recursively copy properties, ignoring internal/positional ones
 	for (const key of Object.keys(node)) {
-		if (['pos', 'end', 'parent', 'flags', 'transformFlags', 'modifierFlagsCache', 'symbol', 'localSymbol', 'locals', 'nextContainer', 'flowNode', 'emitNode'].includes(key)) {
+		if (['pos', 'end', 'parent', 'flags', 'transformFlags', 'modifierFlagsCache', 'symbol', 'localSymbol', 'locals', 'nextContainer', 'flowNode', 'emitNode', 'jsDoc'].includes(key)) {
 			continue;
 		}
 		
 		if (key === 'text' && typeof node[key] === 'string') {
+			if (node.kind === ts.SyntaxKind.SourceFile) continue; // Skip full source text
 			const trimmed = node[key].trim();
 			if (trimmed !== '') {
 				result[key] = trimmed;
