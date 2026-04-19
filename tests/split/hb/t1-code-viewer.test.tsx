@@ -42,7 +42,10 @@ describe('Hyperbranch t1-code-viewer', () => {
                 throw new Error(`No components detected for ${componentName} between ${start} and ${end}`);
             }
             
+            // Sort candidates by size descending to pick the outermost node that fits the range
+            candidates.sort((a, b) => (b.node.getEnd() - b.node.getStart()) - (a.node.getEnd() - a.node.getStart()));
             const astData = candidates[0];
+            
             const request = detectPropsList(sourceFile, typeChecker, astData);
             
             const childrenReplacementNodes = extractChildren && ts.isJsxElement(astData.node)
