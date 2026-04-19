@@ -81,7 +81,7 @@ export function performRefactoring(
 		}
 	}
 
-	const hasChildren = !(decisions as any).hardcodeChildren && ts.isJsxElement(node);
+	const hasChildren = decisions.childrenReplacementNodes !== undefined && decisions.childrenReplacementNodes.length > 0 && ts.isJsxElement(node);
 
 	if (hasChildren) {
 		bindingElements.push(ts.factory.createBindingElement(undefined, undefined, 'children'));
