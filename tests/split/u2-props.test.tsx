@@ -44,7 +44,7 @@ export const UserProfile = () =>
 	)
 };`
 
-describe.skip('[2-props]', () =>
+describe('[2-props]', () =>
 {
 	sft('should extract <div> into UserInfo', INPUT_CODE, OUTPUT_CODE, ({
 		inputCode,
