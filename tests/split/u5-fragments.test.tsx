@@ -7,37 +7,37 @@ import { RefactorDecisions } from '../../src/extract/types';
 import { sft } from './utils';
 
 const INPUT_CODE = `export const Notification = ({ isError, message }: { isError: boolean, message: string }) => {
-return (
-<div>
-{isError && (
-/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
-<>
-<svg width="24" height="24">/* Icon */</svg>
-<span className="error-text">{message}</span>
-</>
-)}
-</div>
-);
+	return (
+		<div>
+			{isError && (
+				/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
+				<>
+					<svg width="24" height="24">/* Icon */</svg>
+					<span className="error-text">{message}</span>
+				</>
+			)}
+		</div>
+	);
 };`;
 
 const OUTPUT_CODE = `type ErrorBannerProps = {
 	message: string;
 }
 const ErrorBanner: React.FC<ErrorBannerProps> = ({ message }) => (
-<>
-<svg width="24" height="24">/* Icon */</svg>
-<span className="error-text">{message}</span>
-</>
+	<>
+		<svg width="24" height="24">/* Icon */</svg>
+		<span className="error-text">{message}</span>
+	</>
 );
 export const Notification = ({ isError, message }: { isError: boolean, message: string }) => {
-return (
-<div>
-{isError && (
-/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
-<ErrorBanner message={message}/>
-)}
-</div>
-);
+	return (
+		<div>
+			{isError && (
+				/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
+				<ErrorBanner message={message}/>
+			)}
+		</div>
+	);
 };`;
 
 describe('[5-fragments]', () =>
