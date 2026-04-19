@@ -29,6 +29,46 @@ export function performRefactoring(
 	const bindingElements: ts.BindingElement[] = [];
 	const jsxAttributes: ts.JsxAttribute[] = [];
 
+	// Extract key attribute if present
+	let keyAttribute: ts.JsxAttribute | undefined;
+	if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
+		const attributes = ts.isJsxElement(node) ? node.openingElement.attributes : node.attributes;
+		const keyAttr = attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.text === 'key') as ts.JsxAttribute | undefined;
+		if (keyAttr) {
+			keyAttribute = keyAttr;
+			
+			// Remove key from componentBody
+			const newAttributes = ts.factory.createJsxAttributes(
+				attributes.properties.filter(p => p !== keyAttr)
+			);
+			
+			if (ts.isJsxElement(node)) {
+				componentBody = ts.factory.updateJsxElement(
+					node,
+					ts.factory.updateJsxOpeningElement(
+						node.openingElement,
+						node.openingElement.tagName,
+						node.openingElement.typeArguments,
+						newAttributes
+					),
+					node.children,
+					node.closingElement
+				);
+			} else {
+				componentBody = ts.factory.updateJsxSelfClosingElement(
+					node,
+					node.tagName,
+					node.typeArguments,
+					newAttributes
+				);
+			}
+		}
+	}
+
+	if (keyAttribute) {
+		jsxAttributes.push(keyAttribute);
+	}
+
 	// Handle props
 	if (hasProps) {
 		for (const propName of selectedProps) {
@@ -49,10 +89,10 @@ export function performRefactoring(
 
 		// Replace children in the extracted component with {children}
 		componentBody = ts.factory.updateJsxElement(
-			node as ts.JsxElement,
-			(node as ts.JsxElement).openingElement,
+			componentBody as ts.JsxElement,
+			(componentBody as ts.JsxElement).openingElement,
 			[ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children'))],
-			(node as ts.JsxElement).closingElement
+			(componentBody as ts.JsxElement).closingElement
 		);
 	}
 
