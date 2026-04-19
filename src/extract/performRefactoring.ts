@@ -86,11 +86,31 @@ export function performRefactoring(
 	if (hasChildren) {
 		bindingElements.push(ts.factory.createBindingElement(undefined, undefined, 'children'));
 
+		const originalChildren = (componentBody as ts.JsxElement).children;
+		const replacementNodes = decisions.childrenReplacementNodes!;
+		
+		const newChildren: ts.JsxChild[] = [];
+		let i = 0;
+		while (i < originalChildren.length) {
+			const child = originalChildren[i];
+			if (replacementNodes.includes(child)) {
+				// Insert {children} once for the contiguous block
+				newChildren.push(ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children')));
+				// Skip all nodes that are in replacementNodes
+				while (i < originalChildren.length && replacementNodes.includes(originalChildren[i])) {
+					i++;
+				}
+			} else {
+				newChildren.push(child);
+				i++;
+			}
+		}
+
 		// Replace children in the extracted component with {children}
 		componentBody = ts.factory.updateJsxElement(
 			componentBody as ts.JsxElement,
 			(componentBody as ts.JsxElement).openingElement,
-			[ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children'))],
+			newChildren,
 			(componentBody as ts.JsxElement).closingElement
 		);
 	}
@@ -115,7 +135,7 @@ export function performRefactoring(
 				undefined,
 				ts.factory.createJsxAttributes(jsxAttributes)
 			),
-			(node as ts.JsxElement).children,
+			decisions.childrenReplacementNodes!,
 			ts.factory.createJsxClosingElement(ts.factory.createIdentifier(componentName))
 		);
 	} else {
