@@ -13,13 +13,18 @@ const FileSelector: React.FC<React.PropsWithChildren> = ({ children }) => (
 	</div>
 )
 
-const Loading: React.FC = () => <div className="p-8 text-gray-500">Loading...</div>;
+const Loading = () => <div className="p-8 text-gray-500">Loading...</div>;
 
 const ErrorMessage: React.FC<React.PropsWithChildren> = ({ children }) => (
 	<div className="p-8 text-red-500">{children}</div>
 )
 
-const CodeViewerView: React.FC<{ path: string; content: string }> = ({ path, content }) => (
+type CodeViewerViewProps = {
+    path: string;
+    content: string;
+};
+
+const CodeViewerView: React.FC<CodeViewerViewProps> = ({ path, content }) => (
 	<div className="h-full overflow-auto bg-white">
       <div className="p-3 border-b border-gray-200 bg-gray-50 text-sm font-medium text-gray-700 flex items-center">
         <span>{path}</span>
@@ -72,4 +77,4 @@ export function CodeViewer({ taskId, runId, path }: CodeViewerProps) {
   return (
     <CodeViewerView path={path} content={content} />
   );
-}
+}```

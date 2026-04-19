@@ -28,16 +28,6 @@ describe('Hyperbranch t1-code-viewer', () => {
         let sourceCode = fs.readFileSync(filePath, 'utf-8');
         let expectedCode = fs.readFileSync(path.join(__dirname, 't1-code-viewer.txt'), 'utf-8');
 
-        // Adjust expected code to match the current behavior of the refactoring logic
-        expectedCode = expectedCode.replace(
-            'const CodeViewerView: React.FC<{ path: string; content: string }>',
-            'type CodeViewerViewProps = {\n    path: string;\n    content: string;\n};\n\nconst CodeViewerView: React.FC<CodeViewerViewProps>'
-        );
-        expectedCode = expectedCode.replace(
-            'const Loading: React.FC = () =>',
-            'const Loading = () =>'
-        );
-
         function runExtraction(
             start: number,
             end: number,
