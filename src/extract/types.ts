@@ -66,10 +66,14 @@ export interface DecisionsRequest {
 export interface RefactorDecisions {
     /** The name for the new component (e.g., "SubmitButton") */
     componentName: string;
-    /** True to hardcode children in the new component, False to pass them as <Comp>{children}</Comp> */
-    hardcodeChildren: boolean;
     /** Which props the user actually decided to pass down */
     selectedProps: string[];
+	/** 
+     * The specific descendant nodes to be extracted as children.
+     * These contiguous sibling nodes will be replaced with `{children}` in the extracted component,
+     * and will be passed as children to the new component instance.
+     */
+    childrenReplacementNodes?: ts.JsxChild[];
 }
 
 export interface RefactorResult {

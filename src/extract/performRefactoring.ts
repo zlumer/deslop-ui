@@ -32,7 +32,7 @@ export function performRefactoring(
 	let keyAttribute: ts.JsxAttribute | undefined;
 	if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
 		const attributes = ts.isJsxElement(node) ? node.openingElement.attributes : node.attributes;
-		const keyAttr = attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.text === 'key') as ts.JsxAttribute | undefined;
+		const keyAttr = attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText() === 'key') as ts.JsxAttribute | undefined;
 		if (keyAttr) {
 			keyAttribute = keyAttr;
 			
