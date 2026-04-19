@@ -32,7 +32,7 @@ interface SearchBarProps {
   setQuery: (query: string) => void
 }
 
-const SearchBar = ({ query, setQuery }: SearchBarProps) => (
+const SearchBar: React.FC<SearchBarProps> = ({ query, setQuery }) => (
   <input 
     type="text" 
     value={query} 
