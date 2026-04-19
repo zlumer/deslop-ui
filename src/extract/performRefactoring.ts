@@ -288,6 +288,9 @@ function createTypeQuick(name: string | string[], typeArgs?: ts.TypeNode | ts.Ty
 }
 
 function createComponentType(componentName: string, hasProps: boolean, hasChildren: boolean): ts.TypeNode | undefined {
+	if (hasProps && hasChildren) {
+		return createTypeQuick(["React", "FC"], createTypeQuick(["React", "PropsWithChildren"], `${componentName}Props`));
+	}
 	if (hasProps) {
 		return createTypeQuick(["React", "FC"], `${componentName}Props`);
 	}
