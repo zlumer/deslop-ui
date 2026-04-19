@@ -88,56 +88,60 @@ export function performRefactoring(
 
 		const replacementNodes = decisions.childrenReplacementNodes!;
 		
-		function visitor(n: ts.Node): ts.Node {
-			if (ts.isJsxElement(n) || ts.isJsxFragment(n)) {
-				const originalChildren = ts.isJsxElement(n) ? n.children : n.children;
-				let hasReplacement = false;
-				for (const child of originalChildren) {
-					if (replacementNodes.includes(child)) {
-						hasReplacement = true;
-						break;
-					}
-				}
-				
-				if (hasReplacement) {
-					const newChildren: ts.JsxChild[] = [];
-					let i = 0;
-					while (i < originalChildren.length) {
-						const child = originalChildren[i];
+		const transformer = (context: ts.TransformationContext) => (rootNode: ts.Node) => {
+			function visitor(n: ts.Node): ts.Node {
+				if (ts.isJsxElement(n) || ts.isJsxFragment(n)) {
+					const originalChildren = ts.isJsxElement(n) ? n.children : n.children;
+					let hasReplacement = false;
+					for (const child of originalChildren) {
 						if (replacementNodes.includes(child)) {
-							// Insert {children} once for the contiguous block
-							newChildren.push(ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children')));
-							// Skip all nodes that are in replacementNodes
-							while (i < originalChildren.length && replacementNodes.includes(originalChildren[i])) {
-								i++;
-							}
-						} else {
-							newChildren.push(ts.visitNode(child, visitor) as ts.JsxChild);
-							i++;
+							hasReplacement = true;
+							break;
 						}
 					}
 					
-					if (ts.isJsxElement(n)) {
-						return ts.factory.updateJsxElement(
-							n,
-							n.openingElement,
-							newChildren,
-							n.closingElement
-						);
-					} else {
-						return ts.factory.updateJsxFragment(
-							n,
-							n.openingFragment,
-							newChildren,
-							n.closingFragment
-						);
+					if (hasReplacement) {
+						const newChildren: ts.JsxChild[] = [];
+						let i = 0;
+						while (i < originalChildren.length) {
+							const child = originalChildren[i];
+							if (replacementNodes.includes(child)) {
+								// Insert {children} once for the contiguous block
+								newChildren.push(ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children')));
+								// Skip all nodes that are in replacementNodes
+								while (i < originalChildren.length && replacementNodes.includes(originalChildren[i])) {
+									i++;
+								}
+							} else {
+								newChildren.push(ts.visitNode(child, visitor) as ts.JsxChild);
+								i++;
+							}
+						}
+						
+						if (ts.isJsxElement(n)) {
+							return ts.factory.updateJsxElement(
+								n,
+								ts.visitNode(n.openingElement, visitor) as ts.JsxOpeningElement,
+								newChildren,
+								ts.visitNode(n.closingElement, visitor) as ts.JsxClosingElement
+							);
+						} else {
+							return ts.factory.updateJsxFragment(
+								n,
+								ts.visitNode(n.openingFragment, visitor) as ts.JsxOpeningFragment,
+								newChildren,
+								ts.visitNode(n.closingFragment, visitor) as ts.JsxClosingFragment
+							);
+						}
 					}
 				}
+				return ts.visitEachChild(n, visitor, context);
 			}
-			return ts.visitEachChild(n, visitor, undefined);
-		}
+			return ts.visitNode(rootNode, visitor);
+		};
 
-		componentBody = ts.visitNode(componentBody, visitor) as ts.Expression;
+		const result = ts.transform(componentBody, [transformer]);
+		componentBody = result.transformed[0] as ts.Expression;
 	}
 
 	if (bindingElements.length > 0) {
