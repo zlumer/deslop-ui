@@ -20,6 +20,7 @@ export function equals(a: string, b: string): boolean {
 function normalizeNode(node: ts.Node): any {
 	if (!node) return null;
 
+	// Ignore tokens that are just syntax/formatting
 	if (
 		node.kind === ts.SyntaxKind.EndOfFileToken ||
 		node.kind === ts.SyntaxKind.EmptyStatement ||
