@@ -82,8 +82,10 @@ function normalizeNode(node: any): any {
 		}
 		
 		if (key === 'text' && typeof node[key] === 'string') {
-			result[key] = node[key].trim();
-			if (result[key] === '') return null;
+			const trimmed = node[key].trim();
+			if (trimmed !== '') {
+				result[key] = trimmed;
+			}
 		} else {
 			const normalized = normalizeNode(node[key]);
 			if (normalized !== null && (Array.isArray(normalized) ? normalized.length > 0 : true)) {
