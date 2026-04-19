@@ -262,29 +262,31 @@ function cleanComponentBody(componentBody: ts.Expression): ts.Expression {
 	return componentBody;
 }
 
+function createReactFCType(typeArgument: ts.TypeNode): ts.TypeReferenceNode {
+	return ts.factory.createTypeReferenceNode(
+		ts.factory.createQualifiedName(
+			ts.factory.createIdentifier('React'),
+			ts.factory.createIdentifier('FC')
+		),
+		[typeArgument]
+	);
+}
+
 function createComponentType(componentName: string, hasProps: boolean, hasChildren: boolean): ts.TypeNode | undefined {
 	if (hasProps) {
-		return ts.factory.createTypeReferenceNode(
-			ts.factory.createQualifiedName(
-				ts.factory.createIdentifier('React'),
-				ts.factory.createIdentifier('FC')
-			),
-			[ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(`${componentName}Props`), undefined)]
+		return createReactFCType(
+			ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(`${componentName}Props`), undefined)
 		);
 	}
 	if (hasChildren) {
-		return ts.factory.createTypeReferenceNode(
-			ts.factory.createQualifiedName(
-				ts.factory.createIdentifier('React'),
-				ts.factory.createIdentifier('FC')
-			),
-			[ts.factory.createTypeReferenceNode(
+		return createReactFCType(
+			ts.factory.createTypeReferenceNode(
 				ts.factory.createQualifiedName(
 					ts.factory.createIdentifier('React'),
 					ts.factory.createIdentifier('PropsWithChildren')
 				),
 				undefined
-			)]
+			)
 		);
 	}
 	return undefined;
