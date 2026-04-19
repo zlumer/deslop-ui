@@ -116,8 +116,8 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'SubmitButton',
-			hardcodeChildren: true, // User decides to hardcode "Submit Form" into the new component
-			selectedProps: []      // No props to pass
+			selectedProps: [],      // No props to pass
+			childrenReplacementNodes: [] // Hardcode children into new component
 		} satisfies RefactorDecisions
 
 		const result = performRefactoring(
@@ -181,8 +181,8 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'SubmitButton',
-			hardcodeChildren: false,
-			selectedProps: []      // No props to pass
+			selectedProps: [],      // No props to pass
+			childrenReplacementNodes: decisionsRequest.childrenNodes
 		} satisfies RefactorDecisions
 
 		const result = performRefactoring(
@@ -232,8 +232,8 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'Heading',
-			hardcodeChildren: false,
-			selectedProps: []      // No props to pass
+			selectedProps: [],      // No props to pass
+			childrenReplacementNodes: decisionsRequest.childrenNodes
 		} satisfies RefactorDecisions
 
 		const result = performRefactoring(
@@ -283,8 +283,8 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'Heading',
-			hardcodeChildren: true,
-			selectedProps: []      // No props to pass
+			selectedProps: [],      // No props to pass
+			childrenReplacementNodes: []
 		} satisfies RefactorDecisions
 
 		const result = performRefactoring(

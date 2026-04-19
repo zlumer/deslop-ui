@@ -98,8 +98,8 @@ describe('[6-event-set-state]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'SearchBar',
-			hardcodeChildren: true,
-			selectedProps: ['query', 'setQuery'] // Pass detected props
+			selectedProps: ['query', 'setQuery'], // Pass detected props
+			childrenReplacementNodes: [] // No children to pass
 		} satisfies RefactorDecisions;
 
 		const result = performRefactoring(
