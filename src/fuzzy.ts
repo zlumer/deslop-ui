@@ -40,6 +40,11 @@ function normalizeNode(node: ts.Node): any {
 		return normalizeNode(node.statements[0].expression!);
 	}
 
+	// Ignore empty JSX expressions (often used for comments like {/* comment */})
+	if (ts.isJsxExpression(node) && !node.expression) {
+		return null;
+	}
+
 	const result: any = { kind: node.kind };
 
 	// Normalize Interface to TypeAlias for comparison
@@ -79,6 +84,31 @@ function normalizeNode(node: ts.Node): any {
 		const text = node.text.trim();
 		if (text === '') return null;
 		result.text = text;
+		return result;
+	}
+
+	// Ignore type annotations on variable declarations to match `const x = ...` with `const x: React.FC = ...`
+	if (ts.isVariableDeclaration(node)) {
+		result.name = normalizeNode(node.name);
+		result.initializer = normalizeNode(node.initializer);
+		return result;
+	}
+
+	// Normalize empty JsxElement (e.g. <span></span>) to JsxSelfClosingElement (e.g. <span/>)
+	if (ts.isJsxElement(node)) {
+		const children = normalizeArray(node.children);
+		if (children.length === 0) {
+			result.kind = ts.SyntaxKind.JsxSelfClosingElement;
+			result.tagName = normalizeNode(node.openingElement.tagName);
+			result.attributes = normalizeNode(node.openingElement.attributes);
+			return result;
+		}
+	}
+
+	if (ts.isJsxSelfClosingElement(node)) {
+		result.kind = ts.SyntaxKind.JsxSelfClosingElement;
+		result.tagName = normalizeNode(node.tagName);
+		result.attributes = normalizeNode(node.attributes);
 		return result;
 	}
 
