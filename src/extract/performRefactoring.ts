@@ -149,6 +149,9 @@ export function performRefactoring(
 		);
 	}
 
+	// Prevent leading comments from the original node from being printed in the new component
+	ts.setEmitFlags(componentBody, ts.EmitFlags.NoLeadingComments);
+
 	// Create new component AST
 	const newComponentAst = ts.factory.createVariableStatement(
 		undefined,
