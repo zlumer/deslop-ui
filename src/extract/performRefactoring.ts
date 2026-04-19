@@ -96,26 +96,13 @@ export function performRefactoring(
 	}
 
 	if (bindingElements.length > 0) {
-		let paramType: ts.TypeNode | undefined;
-		if (hasProps) {
-			paramType = ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(`${componentName}Props`), undefined);
-		} else if (hasChildren) {
-			paramType = ts.factory.createTypeReferenceNode(
-				ts.factory.createQualifiedName(
-					ts.factory.createIdentifier('React'),
-					ts.factory.createIdentifier('PropsWithChildren')
-				),
-				[ts.factory.createTypeLiteralNode([])]
-			);
-		}
-
 		parameters.push(
 			ts.factory.createParameterDeclaration(
 				undefined,
 				undefined,
 				ts.factory.createObjectBindingPattern(bindingElements),
 				undefined,
-				paramType
+				undefined
 			)
 		);
 	}
@@ -160,6 +147,31 @@ export function performRefactoring(
 		);
 	}
 
+	let componentType: ts.TypeNode | undefined;
+	if (hasProps) {
+		componentType = ts.factory.createTypeReferenceNode(
+			ts.factory.createQualifiedName(
+				ts.factory.createIdentifier('React'),
+				ts.factory.createIdentifier('FC')
+			),
+			[ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(`${componentName}Props`), undefined)]
+		);
+	} else if (hasChildren) {
+		componentType = ts.factory.createTypeReferenceNode(
+			ts.factory.createQualifiedName(
+				ts.factory.createIdentifier('React'),
+				ts.factory.createIdentifier('FC')
+			),
+			[ts.factory.createTypeReferenceNode(
+				ts.factory.createQualifiedName(
+					ts.factory.createIdentifier('React'),
+					ts.factory.createIdentifier('PropsWithChildren')
+				),
+				undefined
+			)]
+		);
+	}
+
 	// Create new component AST
 	const newComponentAst = ts.factory.createVariableStatement(
 		undefined,
@@ -168,14 +180,14 @@ export function performRefactoring(
 				ts.factory.createVariableDeclaration(
 					ts.factory.createIdentifier(componentName),
 					undefined,
-					undefined,
+					componentType,
 					ts.factory.createArrowFunction(
 						undefined,
 						undefined,
 						parameters,
 						undefined,
 						ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-						ts.factory.createParenthesizedExpression(componentBody)
+						componentBody
 					)
 				)
 			],
@@ -185,6 +197,7 @@ export function performRefactoring(
 
 	const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
 	let newComponentText = '';
+	let usesDispatch = false;
 
 	// Generate Props Type Alias if needed
 	if (hasProps) {
@@ -206,6 +219,7 @@ export function performRefactoring(
 									if (paramName.startsWith('set') && paramName.length > 3) {
 										paramName = paramName.charAt(3).toLowerCase() + paramName.slice(4);
 									}
+									usesDispatch = true;
 									return ts.factory.createFunctionTypeNode(
 										undefined,
 										[ts.factory.createParameterDeclaration(
@@ -234,14 +248,13 @@ export function performRefactoring(
 			);
 		});
 
-		const interfaceDecl = ts.factory.createInterfaceDeclaration(
+		const typeAliasDecl = ts.factory.createTypeAliasDeclaration(
 			undefined,
 			ts.factory.createIdentifier(`${componentName}Props`),
 			undefined,
-			undefined,
-			typeElements
+			ts.factory.createTypeLiteralNode(typeElements)
 		);
-		newComponentText += printer.printNode(ts.EmitHint.Unspecified, interfaceDecl, sourceFile) + '\n\n';
+		newComponentText += printer.printNode(ts.EmitHint.Unspecified, typeAliasDecl, sourceFile) + '\n\n';
 	}
 
 	newComponentText += printer.printNode(ts.EmitHint.Unspecified, newComponentAst, sourceFile);
@@ -266,41 +279,43 @@ export function performRefactoring(
 	];
 
 	// Find react import and add Dispatch, SetStateAction if needed
-	let reactImport: ts.ImportDeclaration | undefined;
-	for (const stmt of sourceFile.statements) {
-		if (ts.isImportDeclaration(stmt) && ts.isStringLiteral(stmt.moduleSpecifier) && stmt.moduleSpecifier.text === 'react') {
-			reactImport = stmt;
-			break;
+	if (usesDispatch) {
+		let reactImport: ts.ImportDeclaration | undefined;
+		for (const stmt of sourceFile.statements) {
+			if (ts.isImportDeclaration(stmt) && ts.isStringLiteral(stmt.moduleSpecifier) && stmt.moduleSpecifier.text === 'react') {
+				reactImport = stmt;
+				break;
+			}
 		}
-	}
 
-	if (reactImport && reactImport.importClause && reactImport.importClause.namedBindings && ts.isNamedImports(reactImport.importClause.namedBindings)) {
-		const elements = reactImport.importClause.namedBindings.elements;
-		const hasDispatch = elements.some(e => e.name.text === 'Dispatch');
-		const hasSetStateAction = elements.some(e => e.name.text === 'SetStateAction');
-		
-		if (!hasDispatch || !hasSetStateAction) {
-			const newElements = [...elements];
-			if (!hasDispatch) newElements.push(ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier('Dispatch')));
-			if (!hasSetStateAction) newElements.push(ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier('SetStateAction')));
+		if (reactImport && reactImport.importClause && reactImport.importClause.namedBindings && ts.isNamedImports(reactImport.importClause.namedBindings)) {
+			const elements = reactImport.importClause.namedBindings.elements;
+			const hasDispatch = elements.some(e => e.name.text === 'Dispatch');
+			const hasSetStateAction = elements.some(e => e.name.text === 'SetStateAction');
 			
-			const newImport = ts.factory.updateImportDeclaration(
-				reactImport,
-				reactImport.modifiers,
-				ts.factory.updateImportClause(
-					reactImport.importClause,
-					reactImport.importClause.isTypeOnly,
-					reactImport.importClause.name,
-					ts.factory.updateNamedImports(reactImport.importClause.namedBindings, newElements)
-				),
-				reactImport.moduleSpecifier,
-				reactImport.assertClause
-			);
-			
-			textChanges.push({
-				span: { start: reactImport.getStart(sourceFile), length: reactImport.getWidth(sourceFile) },
-				newText: printer.printNode(ts.EmitHint.Unspecified, newImport, sourceFile)
-			});
+			if (!hasDispatch || !hasSetStateAction) {
+				const newElements = [...elements];
+				if (!hasDispatch) newElements.push(ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier('Dispatch')));
+				if (!hasSetStateAction) newElements.push(ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier('SetStateAction')));
+				
+				const newImport = ts.factory.updateImportDeclaration(
+					reactImport,
+					reactImport.modifiers,
+					ts.factory.updateImportClause(
+						reactImport.importClause,
+						reactImport.importClause.isTypeOnly,
+						reactImport.importClause.name,
+						ts.factory.updateNamedImports(reactImport.importClause.namedBindings, newElements)
+					),
+					reactImport.moduleSpecifier,
+					reactImport.assertClause
+				);
+				
+				textChanges.push({
+					span: { start: reactImport.getStart(sourceFile), length: reactImport.getWidth(sourceFile) },
+					newText: printer.printNode(ts.EmitHint.Unspecified, newImport, sourceFile)
+				});
+			}
 		}
 	}
 
