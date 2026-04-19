@@ -6,36 +6,36 @@ import { detectComponents } from '../../src/extract/detectComponents';
 import { RefactorDecisions } from '../../src/extract/types';
 import { sft } from './utils';
 
-const INPUT_CODE = `type Product = { id: string; name: string; price: number };
+const INPUT_CODE = `
+type Product = { id: string; name: string; price: number };
 /* Target: Extract <li> into \`ProductListItem\` */
 export const ProductList = ({ products }: { products: Product[] }) => {
 return (
-<ul>
-{products.map((product) => (
-<li key={product.id} className="list-item">
-<strong>{product.name}</strong>- \${product.price.toFixed(2)}
-</li>
-))}
-</ul>
+	<ul>
+		{products.map((product) => (
+			<li key={product.id} className="list-item">
+			<strong>{product.name}</strong>- \${product.price.toFixed(2)}
+			</li>
+		))}
+	</ul>
 );
-};`;
+};`
 
-const OUTPUT_CODE = `type Product = { id: string; name: string; price: number };
+const OUTPUT_CODE = `
+type Product = { id: string; name: string; price: number };
 /* Target: Extract <li> into \`ProductListItem\` */
 type ProductListItemProps = {
     product: Product;
 };
-const ProductListItem: React.FC<ProductListItemProps> = ({ product }) => <li key={product.id} className="list-item">
-<strong>{product.name}</strong>- \${product.price.toFixed(2)}
+const ProductListItem: React.FC<ProductListItemProps> = ({ product }) => <li className="list-item">
+	<strong>{product.name}</strong>- \${product.price.toFixed(2)}
 </li>;
 export const ProductList = ({ products }: { products: Product[] }) => {
-return (
-<ul>
-{products.map((product) => (
-<ProductListItem product={product}/>
-))}
-</ul>
-);
+	return (
+		<ul>
+			{products.map((product) => (<ProductListItem key={product.id} product={product}/>))}
+		</ul>
+	);
 };`;
 
 describe('[4-arrays]', () =>
