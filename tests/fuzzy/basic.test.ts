@@ -86,14 +86,40 @@ const DIFFERENT_2 = [
 function matrix<T>(arr1: T[], arr2: T[])
 {
 	const result: [T, T, number, number][] = []
-	for (let i = 0; i < arr1.length; i++)
-		for (let j = 0; j < arr2.length; j++)
+	for (let i = 0; i < arr1.length - 1; i++)
+		for (let j = i; j < arr2.length; j++)
 			result.push([arr1[i], arr2[j], i, j])
 	return result
 }
 
 describe('code fuzzy equal', () =>
 {
+	it("sanity check 1", () =>
+	{
+		expect(equals("let x", "let x")).toBe(true)
+		expect(equals("let x", "let y")).toBe(false)
+		expect(equals("let x: number", "let x: number")).toBe(true)
+		expect(equals("let x: number", "let x: string")).toBe(false)
+		expect(equals(
+			`type UserInfoProp = { userName:string, age:number }`,
+			`type UserInfoProp = { userName:string, age:number }`
+		)).toBe(true)
+
+		expect(equals(
+			`type UserInfoProp = { userName:string, age:number }`,
+			`type UserInfoProp = { userName:string, age:string }`
+		)).toBe(false)
+
+		expect(equals(
+			`type UserInfoProp = { userName:string, age:number }`,
+			`type UserInfoProp = {userName:string, age:number }`
+		)).toBe(true)
+
+		expect(equals(
+			`type UserInfoProp = { userName:string, age:number }`,
+			`type UserInfoProp = { age:number }`
+		)).toBe(false)
+	})
 	it.each(matrix(CODE, CODE))('code [$2][$3]', ([a, b]) =>
 	{
 		expect(equals(a, b)).toBe(true)
