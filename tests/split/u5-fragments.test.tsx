@@ -9,10 +9,10 @@ import { sft } from './utils';
 const INPUT_CODE = `export const Notification = ({ isError, message }: { isError: boolean, message: string }) => {
 	return (
 		<div>
+			/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
 			{isError && (
-				/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
 				<>
-					<svg width="24" height="24">/* Icon */</svg>
+					<svg width="24" height="24"><g></g></svg>
 					<span className="error-text">{message}</span>
 				</>
 			)}
@@ -25,15 +25,15 @@ const OUTPUT_CODE = `type ErrorBannerProps = {
 }
 const ErrorBanner: React.FC<ErrorBannerProps> = ({ message }) => (
 	<>
-		<svg width="24" height="24">/* Icon */</svg>
+		<svg width="24" height="24"><g></g></svg>
 		<span className="error-text">{message}</span>
 	</>
 );
 export const Notification = ({ isError, message }: { isError: boolean, message: string }) => {
 	return (
 		<div>
+			/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
 			{isError && (
-				/* Target: Extract BOTH the SVG and the Span into \`ErrorBanner\` */
 				<ErrorBanner message={message}/>
 			)}
 		</div>
