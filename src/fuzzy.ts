@@ -91,6 +91,21 @@ function normalizeNode(node: ts.Node): any {
 	if (ts.isVariableDeclaration(node)) {
 		result.name = normalizeNode(node.name);
 		result.initializer = normalizeNode(node.initializer);
+		
+		let isReactFC = false;
+		if (node.type && ts.isTypeReferenceNode(node.type)) {
+			const typeName = node.type.typeName;
+			if (ts.isQualifiedName(typeName)) {
+				if (ts.isIdentifier(typeName.left) && typeName.left.text === 'React' && typeName.right.text === 'FC') {
+					isReactFC = true;
+				}
+			}
+		}
+		
+		if (node.type && !isReactFC) {
+			result.type = normalizeNode(node.type);
+		}
+		
 		return result;
 	}
 
