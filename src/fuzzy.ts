@@ -141,7 +141,13 @@ function normalizeArray(nodes: ts.NodeArray<ts.Node> | readonly ts.Node[]): any[
 		arr[0].kind === ts.SyntaxKind.BindingElement || 
 		arr[0].kind === ts.SyntaxKind.JsxAttribute
 	)) {
-		arr.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+		arr.sort((a, b) => {
+			const strA = JSON.stringify(a);
+			const strB = JSON.stringify(b);
+			if (strA < strB) return -1;
+			if (strA > strB) return 1;
+			return 0;
+		});
 	}
 	
 	return arr;
