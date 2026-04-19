@@ -3,8 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { execSync } from 'child_process';
 
-// Replace with the actual commit hash you want to pin
-const PINNED_COMMIT = 'main'; 
+const PINNED_COMMIT = '27fbc07f90d69c1b6067a534034ff06b1e4f84c8'; 
 const REPO_URL = 'https://github.com/zlumer/hyperbranch.git';
 
 export function setupHyperbranchFixture(): string {
