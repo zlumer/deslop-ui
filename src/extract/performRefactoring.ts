@@ -160,14 +160,21 @@ export function performRefactoring(
 	newComponentText += printer.printNode(ts.EmitHint.Unspecified, newComponentAst, sourceFile);
 	const replacementText = printer.printNode(ts.EmitHint.Unspecified, replacementAst, sourceFile);
 
+	// Find the top-level statement containing the node to insert the new component before it
+	let topLevelStatement: ts.Node = node;
+	while (topLevelStatement.parent && !ts.isSourceFile(topLevelStatement.parent)) {
+		topLevelStatement = topLevelStatement.parent;
+	}
+	const insertPos = topLevelStatement.getStart(sourceFile);
+
 	const textChanges: ts.TextChange[] = [
 		{
 			span: { start: node.getStart(sourceFile), length: node.getWidth(sourceFile) },
 			newText: replacementText
 		},
 		{
-			span: { start: 0, length: 0 },
-			newText: newComponentText + '\n\n'
+			span: { start: insertPos, length: 0 },
+			newText: newComponentText + '\n'
 		}
 	];
 
