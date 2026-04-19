@@ -110,7 +110,7 @@ function normalizeNode(node: ts.Node): any {
 
 function normalizeArray(nodes: readonly ts.Node[]): any[] {
 	if (!nodes) return [];
-	const arr = nodes.map(normalizeNode).filter(n => n !== null);
+	const arr = nodes.map(n => normalizeNode(n)).filter(n => n !== null);
 	
 	if (arr.length > 0 && arr[0] && (
 		arr[0].kind === ts.SyntaxKind.PropertySignature || 
