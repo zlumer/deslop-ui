@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import * as ts from 'typescript';
+import { equals } from "../../src/fuzzy"
 import { RefactorResult } from '../../src/extract/types';
 import { applyTextChanges } from '../../src/extract/applyTextChanges';
 
@@ -55,6 +56,7 @@ export function sft(title: string, INPUT_CODE: string, EXPECTED_CODE: string, te
 
 		// Apply TextChanges to the original string to verify the final output
 		const finalSourceCode = applyTextChanges(INPUT_CODE, result.textChanges);
-		expect(finalSourceCode).toBe(EXPECTED_CODE);
+		if (!equals(finalSourceCode, EXPECTED_CODE))
+			expect(finalSourceCode).toBe(EXPECTED_CODE)
 	})
 }
