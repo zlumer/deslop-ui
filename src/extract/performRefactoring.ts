@@ -164,7 +164,7 @@ export function performRefactoring(
 						parameters,
 						undefined,
 						ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-						componentBody
+						ts.factory.createParenthesizedExpression(componentBody)
 					)
 				)
 			],
