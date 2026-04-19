@@ -81,38 +81,63 @@ export function performRefactoring(
 		}
 	}
 
-	const hasChildren = decisions.childrenReplacementNodes !== undefined && decisions.childrenReplacementNodes.length > 0 && ts.isJsxElement(node);
+	const hasChildren = decisions.childrenReplacementNodes !== undefined && decisions.childrenReplacementNodes.length > 0;
 
 	if (hasChildren) {
 		bindingElements.push(ts.factory.createBindingElement(undefined, undefined, 'children'));
 
-		const originalChildren = (componentBody as ts.JsxElement).children;
 		const replacementNodes = decisions.childrenReplacementNodes!;
 		
-		const newChildren: ts.JsxChild[] = [];
-		let i = 0;
-		while (i < originalChildren.length) {
-			const child = originalChildren[i];
-			if (replacementNodes.includes(child)) {
-				// Insert {children} once for the contiguous block
-				newChildren.push(ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children')));
-				// Skip all nodes that are in replacementNodes
-				while (i < originalChildren.length && replacementNodes.includes(originalChildren[i])) {
-					i++;
+		function visitor(n: ts.Node): ts.Node {
+			if (ts.isJsxElement(n) || ts.isJsxFragment(n)) {
+				const originalChildren = ts.isJsxElement(n) ? n.children : n.children;
+				let hasReplacement = false;
+				for (const child of originalChildren) {
+					if (replacementNodes.includes(child)) {
+						hasReplacement = true;
+						break;
+					}
 				}
-			} else {
-				newChildren.push(child);
-				i++;
+				
+				if (hasReplacement) {
+					const newChildren: ts.JsxChild[] = [];
+					let i = 0;
+					while (i < originalChildren.length) {
+						const child = originalChildren[i];
+						if (replacementNodes.includes(child)) {
+							// Insert {children} once for the contiguous block
+							newChildren.push(ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier('children')));
+							// Skip all nodes that are in replacementNodes
+							while (i < originalChildren.length && replacementNodes.includes(originalChildren[i])) {
+								i++;
+							}
+						} else {
+							newChildren.push(ts.visitNode(child, visitor) as ts.JsxChild);
+							i++;
+						}
+					}
+					
+					if (ts.isJsxElement(n)) {
+						return ts.factory.updateJsxElement(
+							n,
+							n.openingElement,
+							newChildren,
+							n.closingElement
+						);
+					} else {
+						return ts.factory.updateJsxFragment(
+							n,
+							n.openingFragment,
+							newChildren,
+							n.closingFragment
+						);
+					}
+				}
 			}
+			return ts.visitEachChild(n, visitor, undefined);
 		}
 
-		// Replace children in the extracted component with {children}
-		componentBody = ts.factory.updateJsxElement(
-			componentBody as ts.JsxElement,
-			(componentBody as ts.JsxElement).openingElement,
-			newChildren,
-			(componentBody as ts.JsxElement).closingElement
-		);
+		componentBody = ts.visitNode(componentBody, visitor) as ts.Expression;
 	}
 
 	if (bindingElements.length > 0) {
