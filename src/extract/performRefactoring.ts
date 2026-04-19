@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { } from "ts-morph"
+import { Project } from "ts-morph";
 import { DecisionsRequest, RefactorDecisions, RefactorResult } from './types';
 
 /**
@@ -328,43 +328,38 @@ export function performRefactoring(
 		}
 	];
 
-	// Find react import and add Dispatch, SetStateAction if needed
+	// Find react import and add Dispatch, SetStateAction if needed using ts-morph
 	if (usesDispatch) {
-		let reactImport: ts.ImportDeclaration | undefined;
-		for (const stmt of sourceFile.statements) {
-			if (ts.isImportDeclaration(stmt) && ts.isStringLiteral(stmt.moduleSpecifier) && stmt.moduleSpecifier.text === 'react') {
-				reactImport = stmt;
-				break;
-			}
-		}
-
-		if (reactImport && reactImport.importClause && reactImport.importClause.namedBindings && ts.isNamedImports(reactImport.importClause.namedBindings)) {
-			const elements = reactImport.importClause.namedBindings.elements;
-			const hasDispatch = elements.some(e => e.name.text === 'Dispatch');
-			const hasSetStateAction = elements.some(e => e.name.text === 'SetStateAction');
+		const project = new Project({ useInMemoryFileSystem: true });
+		const sf = project.createSourceFile('temp.tsx', sourceFile.getFullText());
+		const reactImport = sf.getImportDeclaration(decl => decl.getModuleSpecifierValue() === 'react');
+		
+		if (reactImport) {
+			let changed = false;
+			const namedImports = reactImport.getNamedImports().map(ni => ni.getName());
 			
-			if (!hasDispatch || !hasSetStateAction) {
-				const newElements = [...elements];
-				if (!hasDispatch) newElements.push(ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier('Dispatch')));
-				if (!hasSetStateAction) newElements.push(ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier('SetStateAction')));
-				
-				const newImport = ts.factory.updateImportDeclaration(
-					reactImport,
-					reactImport.modifiers,
-					ts.factory.updateImportClause(
-						reactImport.importClause,
-						reactImport.importClause.isTypeOnly,
-						reactImport.importClause.name,
-						ts.factory.updateNamedImports(reactImport.importClause.namedBindings, newElements)
-					),
-					reactImport.moduleSpecifier,
-					reactImport.assertClause
+			if (!namedImports.includes('Dispatch')) {
+				reactImport.addNamedImport('Dispatch');
+				changed = true;
+			}
+			if (!namedImports.includes('SetStateAction')) {
+				reactImport.addNamedImport('SetStateAction');
+				changed = true;
+			}
+			
+			if (changed) {
+				const originalImport = sourceFile.statements.find(stmt => 
+					ts.isImportDeclaration(stmt) && 
+					ts.isStringLiteral(stmt.moduleSpecifier) && 
+					stmt.moduleSpecifier.text === 'react'
 				);
 				
-				textChanges.push({
-					span: { start: reactImport.getStart(sourceFile), length: reactImport.getWidth(sourceFile) },
-					newText: printer.printNode(ts.EmitHint.Unspecified, newImport, sourceFile)
-				});
+				if (originalImport) {
+					textChanges.push({
+						span: { start: originalImport.getStart(sourceFile), length: originalImport.getWidth(sourceFile) },
+						newText: reactImport.getText()
+					});
+				}
 			}
 		}
 	}
