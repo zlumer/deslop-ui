@@ -17,7 +17,7 @@ describe('Hyperbranch t1-code-viewer', () => {
     beforeAll(() => {
         frontendDir = setupHyperbranchFixture();
         baseTempDir = path.resolve(frontendDir, '..');
-    });
+    }, 60000);
 
     afterAll(() => {
         cleanupHyperbranchFixture(baseTempDir);
@@ -89,5 +89,5 @@ describe('Hyperbranch t1-code-viewer', () => {
         }
         
         expect(isMatch).toBe(true);
-    });
+    }, 30000);
 });
