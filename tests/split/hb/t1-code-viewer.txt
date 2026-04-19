@@ -7,25 +7,15 @@ interface CodeViewerProps {
   path: string | null;
 }
 
-const FileSelector: React.FC<React.PropsWithChildren> = ({ children }) => (
-	<div className="h-full flex items-center justify-center text-gray-400">
-	{children}
-	</div>
-)
-
+const FileSelector: React.FC<React.PropsWithChildren> = ({ children }) => <div className="h-full flex items-center justify-center text-gray-400">{children}</div>;
 const Loading = () => <div className="p-8 text-gray-500">Loading...</div>;
-
-const ErrorMessage: React.FC<React.PropsWithChildren> = ({ children }) => (
-	<div className="p-8 text-red-500">{children}</div>
-)
-
+const ErrorMessage: React.FC<React.PropsWithChildren> = ({ children }) => <div className="p-8 text-red-500">{children}</div>;
 type CodeViewerViewProps = {
     path: string;
     content: string;
 };
 
-const CodeViewerView: React.FC<CodeViewerViewProps> = ({ path, content }) => (
-	<div className="h-full overflow-auto bg-white">
+const CodeViewerView: React.FC<CodeViewerViewProps> = ({ path, content }) => <div className="h-full overflow-auto bg-white">
       <div className="p-3 border-b border-gray-200 bg-gray-50 text-sm font-medium text-gray-700 flex items-center">
         <span>{path}</span>
       </div>
@@ -37,9 +27,7 @@ const CodeViewerView: React.FC<CodeViewerViewProps> = ({ path, content }) => (
           <code>{content}</code>
         </pre>
       </div>
-    </div>
-)
-
+    </div>;
 export function CodeViewer({ taskId, runId, path }: CodeViewerProps) {
   const [content, setContent] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -63,7 +51,11 @@ export function CodeViewer({ taskId, runId, path }: CodeViewerProps) {
   }, [taskId, runId, path]);
 
   if (!path) {
-    return <FileSelector>Select a file to view content</FileSelector>;
+    return (
+      <FileSelector>
+        Select a file to view content
+      </FileSelector>
+    );
   }
 
   if (loading) {
@@ -75,6 +67,6 @@ export function CodeViewer({ taskId, runId, path }: CodeViewerProps) {
   }
 
   return (
-    <CodeViewerView path={path} content={content} />
+    <CodeViewerView path={path} content={content}/>
   );
-}```
+}
