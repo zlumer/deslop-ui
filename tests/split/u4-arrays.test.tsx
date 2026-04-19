@@ -21,20 +21,18 @@ return (
 };`;
 
 const OUTPUT_CODE = `type Product = { id: string; name: string; price: number };
-interface ProductListItemProps {
-product: Product;
-}
-const ProductListItem = ({ product }: ProductListItemProps) => (
-<li className="list-item">
-<strong>{product.name}</strong>- \${product.price.toFixed(2)}
-</li>
-);
 /* Target: Extract <li> into \`ProductListItem\` */
+type ProductListItemProps = {
+    product: Product;
+};
+const ProductListItem: React.FC<ProductListItemProps> = ({ product }) => <li key={product.id} className="list-item">
+<strong>{product.name}</strong>- \${product.price.toFixed(2)}
+</li>;
 export const ProductList = ({ products }: { products: Product[] }) => {
 return (
 <ul>
 {products.map((product) => (
-<ProductListItem key={product.id} product={product} />
+<ProductListItem product={product}/>
 ))}
 </ul>
 );
