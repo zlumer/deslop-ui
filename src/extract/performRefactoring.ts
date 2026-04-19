@@ -367,6 +367,6 @@ export function performRefactoring(
 	return {
 		textChanges,
 		newComponentAst,
-		replacementAst: replacementAst as any
+		replacementAst
 	};
 }
