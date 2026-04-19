@@ -262,32 +262,37 @@ function cleanComponentBody(componentBody: ts.Expression): ts.Expression {
 	return componentBody;
 }
 
-function createReactFCType(typeArgument: ts.TypeNode): ts.TypeReferenceNode {
-	return ts.factory.createTypeReferenceNode(
-		ts.factory.createQualifiedName(
-			ts.factory.createIdentifier('React'),
-			ts.factory.createIdentifier('FC')
-		),
-		[typeArgument]
-	);
+function createTypeQuick(name: string | string[], typeArgs?: ts.TypeNode | ts.TypeNode[] | string): ts.TypeReferenceNode {
+	let nameNode: ts.EntityName;
+	if (Array.isArray(name)) {
+		nameNode = ts.factory.createIdentifier(name[0]);
+		for (let i = 1; i < name.length; i++) {
+			nameNode = ts.factory.createQualifiedName(nameNode, ts.factory.createIdentifier(name[i]));
+		}
+	} else {
+		nameNode = ts.factory.createIdentifier(name);
+	}
+
+	let typeArgsNodes: ts.TypeNode[] | undefined;
+	if (typeArgs) {
+		if (typeof typeArgs === 'string') {
+			typeArgsNodes = [ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(typeArgs), undefined)];
+		} else if (Array.isArray(typeArgs)) {
+			typeArgsNodes = typeArgs;
+		} else {
+			typeArgsNodes = [typeArgs];
+		}
+	}
+
+	return ts.factory.createTypeReferenceNode(nameNode, typeArgsNodes);
 }
 
 function createComponentType(componentName: string, hasProps: boolean, hasChildren: boolean): ts.TypeNode | undefined {
 	if (hasProps) {
-		return createReactFCType(
-			ts.factory.createTypeReferenceNode(ts.factory.createIdentifier(`${componentName}Props`), undefined)
-		);
+		return createTypeQuick(["React", "FC"], `${componentName}Props`);
 	}
 	if (hasChildren) {
-		return createReactFCType(
-			ts.factory.createTypeReferenceNode(
-				ts.factory.createQualifiedName(
-					ts.factory.createIdentifier('React'),
-					ts.factory.createIdentifier('PropsWithChildren')
-				),
-				undefined
-			)
-		);
+		return createTypeQuick(["React", "FC"], createTypeQuick(["React", "PropsWithChildren"]));
 	}
 	return undefined;
 }
