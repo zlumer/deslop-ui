@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { setupHyperbranchFixture, cleanupHyperbranchFixture } from './fixture';
 import { detectComponents } from '../../../src/extract/detectComponents';
 import { detectPropsList } from '../../../src/extract/detectPropsList';
