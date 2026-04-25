@@ -17,7 +17,7 @@ export function equals(a: string, b: string): boolean {
 	return JSON.stringify(normA) === JSON.stringify(normB);
 }
 
-function normalizeNode(node: ts.Node): any {
+function normalizeNode(node: ts.Node | undefined): any {
 	if (!node) return null;
 
 	// Ignore tokens that are just syntax/formatting

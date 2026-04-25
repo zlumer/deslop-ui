@@ -56,7 +56,7 @@ describe('Hyperbranch t2-task-details', () => {
             
             const childrenReplacementNodes = extractChildren && ts.isJsxElement(astData.node)
                 ? Array.from(astData.node.children)
-                : undefined;
+                : [];
 
             const decisions = {
                 componentName,
@@ -64,7 +64,7 @@ describe('Hyperbranch t2-task-details', () => {
                 childrenReplacementNodes
             };
             
-            const result = performRefactoring(sourceFile, request, decisions);
+            const result = performRefactoring(sourceFile, request, decisions as any);
             sourceCode = applyTextChanges(sourceCode, result.textChanges);
         }
 
