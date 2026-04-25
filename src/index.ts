@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 
 import { subcommands, run } from 'cmd-ts';
 import { detectCmd } from './commands/detect';
