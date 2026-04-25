@@ -58,7 +58,7 @@ describe('Hyperbranch t1-code-viewer', () => {
                 childrenReplacementNodes
             };
             
-            const result = performRefactoring(sourceFile, request, decisions as any);
+            const result = performRefactoring(sourceFile, request, decisions);
             sourceCode = applyTextChanges(sourceCode, result.textChanges);
         }
 

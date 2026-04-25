@@ -64,7 +64,7 @@ describe('Hyperbranch t2-task-details', () => {
                 childrenReplacementNodes
             };
             
-            const result = performRefactoring(sourceFile, request, decisions as any);
+            const result = performRefactoring(sourceFile, request, decisions);
             sourceCode = applyTextChanges(sourceCode, result.textChanges);
         }
 
