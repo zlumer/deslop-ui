@@ -6,7 +6,7 @@ import { propsCmd } from './commands/props';
 import { extractCmd } from './commands/extract';
 
 const app = subcommands({
-    name: 'refactor',
+    name: 'deslop-ui',
     description: 'React component extraction CLI',
     cmds: {
         detect: detectCmd,
