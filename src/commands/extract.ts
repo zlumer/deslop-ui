@@ -35,7 +35,7 @@ export const extractCmd = command({
         const decisions = {
             componentName: name,
             selectedProps,
-            childrenReplacementNodes: extractChildren ? request.childrenNodes : undefined
+            childrenReplacementNodes: extractChildren ? request.childrenNodes : []
         };
 
         const result = performRefactoring(sourceFile, request, decisions);

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
-	"jsx": "preserve",
+    "jsx": "preserve",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -10,5 +10,5 @@
     "types": ["node"]
   },
   "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["tests/atomic/test-project/**/*"]
+  "exclude": ["tests/atomic/test-project/**/*", "tests/split/**/*.txt"]
 }
