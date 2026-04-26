@@ -82,8 +82,8 @@ export interface DecisionsRequest {
 export interface RefactorDecisions {
     /** The name for the new component (e.g., "SubmitButton") */
     componentName: string;
-    /** Which props the user actually decided to pass down */
-    selectedProps: string[];
+    /** Mapping of original variable names to new prop names */
+    propRenames?: Record<string, string>;
 	/** 
      * The specific descendant nodes to be extracted as children.
      * These contiguous sibling nodes will be replaced with `{children}` in the extracted component,

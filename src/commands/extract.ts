@@ -33,11 +33,18 @@ export const extractCmd = command({
         }
 
         const request = detectPropsList(sourceFile, typeChecker, candidate);
-        const selectedProps = props ? props.split(',').map(p => p.trim()).filter(Boolean) : [];
+        
+        const propRenames: Record<string, string> = {};
+        if (props) {
+            props.split(',').forEach(p => {
+                const [oldName, newName] = p.split(':').map(s => s.trim());
+                if (oldName && newName) propRenames[oldName] = newName;
+            });
+        }
         
         const decisions = {
             componentName: name,
-            selectedProps,
+            propRenames,
             childrenReplacementNodes: extractChildren ? request.childrenNodes : []
         };
 

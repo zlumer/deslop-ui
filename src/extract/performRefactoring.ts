@@ -17,8 +17,8 @@ export function performRefactoring(
 ): RefactorResult {
 	const componentName = decisions.componentName;
 	const node = request.astData.node;
-	const selectedProps = decisions.selectedProps || [];
-	const hasProps = selectedProps.length > 0;
+	const propRenames = decisions.propRenames || {};
+	const hasProps = request.props.length > 0;
 	const hasChildren = decisions.childrenReplacementNodes !== undefined && decisions.childrenReplacementNodes.length > 0;
 
 	let componentBody = node as ts.Expression;
@@ -35,7 +35,7 @@ export function performRefactoring(
 
 	// 2. Handle props
 	if (hasProps) {
-		buildProps(selectedProps, bindingElements, jsxAttributes);
+		buildProps(request.props, propRenames, bindingElements, jsxAttributes);
 	}
 
 	// 3. Handle children
@@ -80,7 +80,7 @@ export function performRefactoring(
 	let usesDispatch = false;
 
 	if (hasProps) {
-		const typeAliasResult = generatePropsTypeAlias(componentName, selectedProps, request.props);
+		const typeAliasResult = generatePropsTypeAlias(componentName, request.props, propRenames);
 		usesDispatch = typeAliasResult.usesDispatch;
 		newComponentText += printer.printNode(ts.EmitHint.Unspecified, typeAliasResult.typeAliasDecl, sourceFile) + '\n\n';
 	}
@@ -148,13 +148,22 @@ function extractKeyAttribute(node: ts.Node, componentBody: ts.Expression) {
 	return { keyAttribute, componentBody };
 }
 
-function buildProps(selectedProps: string[], bindingElements: ts.BindingElement[], jsxAttributes: ts.JsxAttribute[]) {
-	for (const propName of selectedProps) {
-		bindingElements.push(ts.factory.createBindingElement(undefined, undefined, propName));
+function buildProps(requestProps: PropCandidate[], propRenames: Record<string, string>, bindingElements: ts.BindingElement[], jsxAttributes: ts.JsxAttribute[]) {
+	for (const prop of requestProps) {
+		const originalName = prop.name;
+		const propName = propRenames[originalName] || originalName;
+
+		bindingElements.push(
+			ts.factory.createBindingElement(
+				undefined,
+				propName !== originalName ? ts.factory.createIdentifier(propName) : undefined,
+				ts.factory.createIdentifier(originalName)
+			)
+		);
 		jsxAttributes.push(
 			ts.factory.createJsxAttribute(
 				ts.factory.createIdentifier(propName),
-				ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier(propName))
+				ts.factory.createJsxExpression(undefined, ts.factory.createIdentifier(originalName))
 			)
 		);
 	}
@@ -329,12 +338,13 @@ function createNewComponentAst(
 	);
 }
 
-function generatePropsTypeAlias(componentName: string, selectedProps: string[], requestProps: PropCandidate[]) {
+function generatePropsTypeAlias(componentName: string, requestProps: PropCandidate[], propRenames: Record<string, string>) {
 	let usesDispatch = false;
 
-	const typeElements = selectedProps.map(propName => {
-		const propCand = requestProps.find(p => p.name === propName);
-		let typeNode = propCand?.typeNode || ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+	const typeElements = requestProps.map(propCand => {
+		const originalName = propCand.name;
+		const propName = propRenames[originalName] || originalName;
+		let typeNode = propCand.typeNode || ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 		
 		typeNode = ts.visitNode(typeNode, function visitor(n: ts.Node): ts.Node {
 			const dispatchType = tryTransformDispatchType(n, visitor, propName);
