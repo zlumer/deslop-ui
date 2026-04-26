@@ -1,4 +1,4 @@
-import { command, string, number, option, multioption, boolean, flag, optional } from 'cmd-ts';
+import { command, string, number, option, multioption, boolean, flag, optional, array } from 'cmd-ts';
 import * as ts from 'typescript';
 import * as fs from 'node:fs';
 import { detectPropsList } from '../extract/detectPropsList';
@@ -15,7 +15,7 @@ export const extractCmd = command({
         end: option({ type: optional(string), long: 'end', description: 'Offset or line:col (1-based)' }),
         tag: option({ type: optional(string), long: 'tag' }),
         name: option({ type: string, long: 'name' }),
-        prop: multioption({ type: string, long: 'prop', short: 'p', description: 'Prop renames in format oldName:newName' }),
+        prop: multioption({ type: array(string), long: 'prop', short: 'p', description: 'Prop renames in format oldName:newName' }),
         extractChildren: flag({ type: boolean, long: 'extract-children', defaultValue: () => false })
     },
     handler: ({ file, start, end, tag, name, prop, extractChildren }) => {

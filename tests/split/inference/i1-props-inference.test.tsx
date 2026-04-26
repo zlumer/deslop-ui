@@ -84,7 +84,7 @@ describe('Prop Type Inference from Usage', () => {
                 return <div>{myList.map((item: any) => <span key={item.id}>{item.name}</span>)}</div>;
             }
         `);
-        expect(getPropType('myList')).toBe('any[]');
+        expect(getPropType('myList')).toBe('unknown[]');
     });
 
     it('4. infers object shape when properties are accessed', () => {
@@ -96,7 +96,7 @@ describe('Prop Type Inference from Usage', () => {
         `);
         // Normalize whitespace for the assertion
         const typeStr = getPropType('myObj').replace(/\s+/g, ' ');
-        expect(typeStr).toContain('{ firstName: any; age: any; }');
+        expect(typeStr).toContain('{ firstName: React.ReactNode; age: React.ReactNode; }');
     });
 
     it('5. infers from function signatures when passed as arguments', () => {
