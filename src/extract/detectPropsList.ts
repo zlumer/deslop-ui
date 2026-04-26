@@ -97,6 +97,95 @@ export function detectPropsList(
 
 	visit(node);
 
+	function inferTypeFromUsage(usageNodes: ts.Identifier[]): ts.TypeNode | undefined {
+		let isReactNode = false;
+		let isPrimitive = false;
+		let isArray = false;
+		const properties = new Set<string>();
+		let inferredTypeNode: ts.TypeNode | undefined;
+
+		for (const n of usageNodes) {
+			const parent = n.parent;
+			if (ts.isJsxExpression(parent) && parent.parent && (ts.isJsxElement(parent.parent) || ts.isJsxFragment(parent.parent))) {
+				isReactNode = true;
+			} else if (ts.isTemplateSpan(parent)) {
+				isPrimitive = true;
+			} else if (ts.isPropertyAccessExpression(parent) && parent.expression === n) {
+				if (parent.name.text === 'map') {
+					isArray = true;
+				} else {
+					properties.add(parent.name.text);
+				}
+			} else if (ts.isCallExpression(parent)) {
+				const argIndex = parent.arguments.indexOf(n);
+				if (argIndex !== -1) {
+					const signature = typeChecker.getResolvedSignature(parent);
+					if (signature && signature.parameters.length > argIndex) {
+						const paramSymbol = signature.parameters[argIndex];
+						const paramType = typeChecker.getTypeOfSymbolAtLocation(paramSymbol, parent);
+						const typeNode = typeChecker.typeToTypeNode(paramType, parent, ts.NodeBuilderFlags.NoTruncation);
+						if (typeNode && typeNode.kind !== ts.SyntaxKind.AnyKeyword) {
+							inferredTypeNode = typeNode;
+						}
+					}
+				}
+			}
+		}
+
+		if (inferredTypeNode) return inferredTypeNode;
+
+		if (properties.size > 0) {
+			const members = Array.from(properties).map(prop => 
+				ts.factory.createPropertySignature(
+					undefined,
+					ts.factory.createIdentifier(prop),
+					undefined,
+					ts.factory.createTypeReferenceNode(
+						ts.factory.createQualifiedName(
+							ts.factory.createIdentifier("React"),
+							ts.factory.createIdentifier("ReactNode")
+						),
+						undefined
+					)
+				)
+			);
+			return ts.factory.createTypeLiteralNode(members);
+		}
+
+		if (isArray) {
+			return ts.factory.createArrayTypeNode(ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword));
+		}
+
+		if (isPrimitive) {
+			return ts.factory.createUnionTypeNode([
+				ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+				ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+				ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword)
+			]);
+		}
+
+		if (isReactNode) {
+			return ts.factory.createTypeReferenceNode(
+				ts.factory.createQualifiedName(
+					ts.factory.createIdentifier("React"),
+					ts.factory.createIdentifier("ReactNode")
+				),
+				undefined
+			);
+		}
+
+		return undefined;
+	}
+
+	for (const prop of propsMap.values()) {
+		if (!prop.typeNode || prop.typeNode.kind === ts.SyntaxKind.AnyKeyword) {
+			const inferred = inferTypeFromUsage(prop.usageNodes);
+			if (inferred) {
+				prop.typeNode = inferred;
+			}
+		}
+	}
+
 	return {
 		astData,
 		props: Array.from(propsMap.values()),
