@@ -3,11 +3,14 @@ import * as ts from 'typescript';
 
 export interface ComplexityMetrics {
 	attributesCount: number;
+	interactiveAttributesCount: number;
 	conditionalsCount: number;
 	expressionsCount: number;
 	listRenderingsCount: number;
 	inlineFunctionsCount: number;
+	renderPropsCount: number;
 	stylingVolume: number;
+	textVolume: number;
 	rawNodeCount: number;
 	externalDependenciesCount: number;
 	score: number;
@@ -20,7 +23,7 @@ export interface ComplexityMetrics {
 	};
 }
 
-export type ExtractionType = 'atom' | 'layout' | 'list' | 'feature' | 'complex' | 'unknown';
+export type ExtractionType = 'atom' | 'layout' | 'list' | 'feature' | 'complex' | 'content' | 'unknown';
 
 export interface ComponentComplexity extends ComplexityMetrics {
 	childrenCount: number;
@@ -38,7 +41,10 @@ function analyzeNodes(nodes: ts.Node[], initialDepth: number): Omit<ComplexityMe
 	let maxDepth = initialDepth;
 	let listRenderingsCount = 0;
 	let inlineFunctionsCount = 0;
+	let renderPropsCount = 0;
 	let stylingVolume = 0;
+	let textVolume = 0;
+	let interactiveAttributesCount = 0;
 	let rawNodeCount = 0;
 	const identifiers = new Set<string>();
 
@@ -46,8 +52,16 @@ function analyzeNodes(nodes: ts.Node[], initialDepth: number): Omit<ComplexityMe
 		rawNodeCount++;
 		maxDepth = Math.max(maxDepth, currentDepth);
 
-		if (ts.isJsxAttribute(n) || ts.isJsxSpreadAttribute(n)) {
+		if (ts.isJsxText(n)) {
+			textVolume += n.text.trim().length;
+		} else if (ts.isJsxAttribute(n) || ts.isJsxSpreadAttribute(n)) {
 			attributesCount++;
+			if (ts.isJsxAttribute(n)) {
+				const name = n.name.getText();
+				if (name.startsWith('on') && name.length > 2 && name[2] === name[2].toUpperCase()) {
+					interactiveAttributesCount++;
+				}
+			}
 			if (ts.isJsxAttribute(n) && n.name.getText() === 'className' && n.initializer) {
 				if (ts.isStringLiteral(n.initializer)) {
 					stylingVolume += n.initializer.text.length;
@@ -65,6 +79,11 @@ function analyzeNodes(nodes: ts.Node[], initialDepth: number): Omit<ComplexityMe
 			conditionalsCount++;
 		} else if (ts.isJsxExpression(n)) {
 			expressionsCount++;
+			if (n.expression && (ts.isArrowFunction(n.expression) || ts.isFunctionExpression(n.expression))) {
+				if (n.parent && (ts.isJsxElement(n.parent) || ts.isJsxFragment(n.parent))) {
+					renderPropsCount++;
+				}
+			}
 		} else if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression) && n.expression.name.text === 'map') {
 			listRenderingsCount++;
 		} else if (ts.isArrowFunction(n) || ts.isFunctionExpression(n)) {
@@ -85,11 +104,14 @@ function analyzeNodes(nodes: ts.Node[], initialDepth: number): Omit<ComplexityMe
 
 	return {
 		attributesCount,
+		interactiveAttributesCount,
 		conditionalsCount,
 		expressionsCount,
 		listRenderingsCount,
 		inlineFunctionsCount,
+		renderPropsCount,
 		stylingVolume,
+		textVolume,
 		rawNodeCount,
 		externalDependenciesCount: identifiers.size,
 		maxDepth
@@ -101,11 +123,13 @@ function calculateMetrics(raw: ReturnType<typeof analyzeNodes>, childrenCount: n
 		(raw.conditionalsCount * 3.0) + 
 		(raw.listRenderingsCount * 3.0) + 
 		(raw.inlineFunctionsCount * 2.5) + 
+		(raw.renderPropsCount * 4.0) +
 		(raw.maxDepth * 2.0) + 
 		(raw.externalDependenciesCount * 2.0) + 
 		(raw.expressionsCount * 1.5) + 
 		(raw.attributesCount * 1.0) + 
 		(raw.stylingVolume * 0.05) + 
+		(raw.textVolume * 0.01) +
 		(childrenCount * 0.5);
 
 	const vector = {
@@ -127,16 +151,21 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	const selfNodes: ts.Node[] = [];
 	const contentNodes: ts.Node[] = [];
 	let childrenCount = 0;
+	let isCustomComponent = false;
+	let isFragment = false;
 
 	if (ts.isJsxElement(node)) {
 		selfNodes.push(node.openingElement);
 		contentNodes.push(...node.children);
 		childrenCount = node.children.filter(c => !ts.isJsxText(c) || c.text.trim().length > 0).length;
+		isCustomComponent = /^[A-Z]/.test(node.openingElement.tagName.getText());
 	} else if (ts.isJsxSelfClosingElement(node)) {
 		selfNodes.push(node);
+		isCustomComponent = /^[A-Z]/.test(node.tagName.getText());
 	} else if (ts.isJsxFragment(node)) {
 		contentNodes.push(...node.children);
 		childrenCount = node.children.filter(c => !ts.isJsxText(c) || c.text.trim().length > 0).length;
+		isFragment = true;
 	} else {
 		selfNodes.push(node);
 	}
@@ -150,11 +179,14 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	// Combine for total
 	const totalRaw = {
 		attributesCount: rawSelf.attributesCount + rawContent.attributesCount,
+		interactiveAttributesCount: rawSelf.interactiveAttributesCount + rawContent.interactiveAttributesCount,
 		conditionalsCount: rawSelf.conditionalsCount + rawContent.conditionalsCount,
 		expressionsCount: rawSelf.expressionsCount + rawContent.expressionsCount,
 		listRenderingsCount: rawSelf.listRenderingsCount + rawContent.listRenderingsCount,
 		inlineFunctionsCount: rawSelf.inlineFunctionsCount + rawContent.inlineFunctionsCount,
+		renderPropsCount: rawSelf.renderPropsCount + rawContent.renderPropsCount,
 		stylingVolume: rawSelf.stylingVolume + rawContent.stylingVolume,
+		textVolume: rawSelf.textVolume + rawContent.textVolume,
 		rawNodeCount: rawSelf.rawNodeCount + rawContent.rawNodeCount,
 		externalDependenciesCount: rawSelf.externalDependenciesCount + rawContent.externalDependenciesCount,
 		maxDepth: Math.max(rawSelf.maxDepth, rawContent.maxDepth)
@@ -165,7 +197,13 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	let extractionType: ExtractionType = 'unknown';
 	const extractionWarnings: string[] = [];
 
-	if (totalMetrics.score > 50 || totalMetrics.vector.structural > 30) {
+	if (isCustomComponent && childrenCount === 0) {
+		extractionType = 'unknown';
+		extractionWarnings.push('This is already a custom component with no children. Extracting it further is usually unnecessary.');
+	} else if (totalMetrics.renderPropsCount > 0) {
+		extractionType = 'complex';
+		extractionWarnings.push('Render props or function-as-child pattern detected. Extraction might require custom hook wrapping or preserving the render prop signature.');
+	} else if (totalMetrics.score > 50 || totalMetrics.vector.structural > 30) {
 		extractionType = 'complex';
 		extractionWarnings.push('This component is very complex. Consider extracting its children first (bottom-up refactoring).');
 	} else if (totalMetrics.vector.coupling > 6) {
@@ -173,13 +211,15 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 		extractionWarnings.push('High coupling detected. Extracting this will result in many props. Consider grouping state or extracting a custom hook first.');
 	} else if (totalMetrics.listRenderingsCount > 0) {
 		extractionType = 'list';
-	} else if (selfMetrics.stylingVolume > 100 && contentMetrics.score < 10) {
+	} else if (contentMetrics.textVolume > 200 && totalMetrics.vector.logical < 5 && totalMetrics.vector.structural < 10) {
+		extractionType = 'content';
+	} else if (!isFragment && !isCustomComponent && (selfMetrics.stylingVolume > 20 || (selfMetrics.attributesCount > 0 && contentMetrics.score < 5)) && contentMetrics.score < 10) {
 		extractionType = 'atom';
 	} else if (contentMetrics.vector.structural > 15 && selfMetrics.vector.logical < 5) {
 		extractionType = 'layout';
 	}
 
-	if (totalMetrics.vector.coupling > 6 && extractionType !== 'feature' && extractionType !== 'complex') {
+	if (totalMetrics.vector.coupling > 6 && extractionType !== 'feature' && extractionType !== 'complex' && extractionType !== 'unknown') {
 		extractionWarnings.push('High coupling detected. Consider grouping props.');
 	}
 
