@@ -23,7 +23,7 @@ export interface ComplexityMetrics {
 	};
 }
 
-export type ExtractionType = 'atom' | 'layout' | 'list' | 'content' | 'unknown';
+export type ExtractionType = 'atom' | 'layout' | 'listElement' | 'content' | 'unknown';
 
 export interface ComponentComplexity extends ComplexityMetrics {
 	childrenCount: number;
@@ -147,6 +147,25 @@ function calculateMetrics(raw: ReturnType<typeof analyzeNodes>, childrenCount: n
 	};
 }
 
+function isRootOfListElement(node: ts.Node): boolean {
+	let current = node.parent;
+	while (current) {
+		if (ts.isArrowFunction(current) || ts.isFunctionExpression(current)) {
+			if (current.parent && ts.isCallExpression(current.parent) && 
+				ts.isPropertyAccessExpression(current.parent.expression) && 
+				current.parent.expression.name.text === 'map') {
+				return true;
+			}
+			return false; // Stop at the first function boundary
+		}
+		if (ts.isJsxElement(current) || ts.isJsxFragment(current)) {
+			return false; // Stop if we hit another JSX element (meaning we are not the root)
+		}
+		current = current.parent;
+	}
+	return false;
+}
+
 export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	const selfNodes: ts.Node[] = [];
 	const contentNodes: ts.Node[] = [];
@@ -197,11 +216,14 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	let extractionType: ExtractionType = 'unknown';
 	const extractionWarnings: string[] = [];
 
+	const isSimpleWrapper = totalMetrics.score < 10;
+	const isShallowCustom = isCustomComponent && totalMetrics.maxDepth < 3;
+
 	if (isCustomComponent && childrenCount === 0) {
 		extractionType = 'unknown';
 		extractionWarnings.push('This is already a custom component with no children. Extracting it further is usually unnecessary.');
-	} else if (totalMetrics.listRenderingsCount > 0) {
-		extractionType = 'list';
+	} else if (isRootOfListElement(node) && !isShallowCustom && !isSimpleWrapper) {
+		extractionType = 'listElement';
 	} else if (contentMetrics.textVolume > 200 && totalMetrics.vector.logical < 5 && totalMetrics.vector.structural < 10) {
 		extractionType = 'content';
 	} else if (!isFragment && !isCustomComponent && (selfMetrics.stylingVolume > 20 || (selfMetrics.attributesCount > 0 && contentMetrics.score < 5)) && contentMetrics.score < 10) {
