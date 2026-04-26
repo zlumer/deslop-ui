@@ -8,7 +8,7 @@ const INPUT_CODE = fs.readFileSync(path.join(__dirname, 'c1-simple.in.txt'), 'ut
 const OUTPUT_CODE = fs.readFileSync(path.join(__dirname, 'c1-simple.out.txt'), 'utf-8')
 
 function runCli(command: string) {
-	const cliPath = path.resolve(__dirname, '../../src/index.ts');
+	const cliPath = path.resolve(__dirname, '../../../src/index.ts');
 	return execSync(`npx tsx ${cliPath} ${command}`, { encoding: 'utf-8' });
 }
 
