@@ -44,7 +44,7 @@ export interface ExtractionCandidate {
 	/** The end offset of the node in the source file */
 	end: FileCursorPositionFull;
 	/** The calculated complexity score of the component */
-	complexity: Record<string, number>;
+	complexity: Record<string, any>;
 }
 
 export type ExtractionCandidates = ExtractionCandidate[];

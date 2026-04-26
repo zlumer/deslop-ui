@@ -247,7 +247,7 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	};
 }
 
-export function summarizeComplexity(complexity: ComponentComplexity): Record<string, number> {
+export function summarizeComplexity(complexity: ComponentComplexity): Record<string, any> {
 	const metrics = [
 		{ key: 'logicalComplexity', value: complexity.vector.logical, threshold: 5 },
 		{ key: 'structuralComplexity', value: complexity.vector.structural, threshold: 10 },
@@ -258,7 +258,7 @@ export function summarizeComplexity(complexity: ComponentComplexity): Record<str
 		{ key: 'maxDepth', value: complexity.maxDepth, threshold: 4 }
 	];
 
-	const result: Record<string, number> = {};
+	const result: Record<string, any> = {};
 
 	metrics
 		.filter(m => m.value > m.threshold)
@@ -270,6 +270,14 @@ export function summarizeComplexity(complexity: ComponentComplexity): Record<str
 
 	if (Object.keys(result).length > 0) {
 		result['totalScore'] = Number(complexity.score.toFixed(1));
+	}
+
+	if (complexity.extractionType !== 'unknown') {
+		result['extractionType'] = complexity.extractionType;
+	}
+	
+	if (complexity.extractionWarnings && complexity.extractionWarnings.length > 0) {
+		result['extractionWarnings'] = complexity.extractionWarnings;
 	}
 
 	return result;
