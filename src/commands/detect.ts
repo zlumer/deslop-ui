@@ -10,6 +10,10 @@ function parsePosition(pos: string, sourceFile: ts.SourceFile): number {
     }
     return parseInt(pos, 10);
 }
+function positionToLineCol(pos: number, sourceFile: ts.SourceFile): `${number}:${number}` {
+	const { line, character } = sourceFile.getLineAndCharacterOfPosition(pos);
+	return `${line + 1}:${character + 1}`; // Convert to 1-based
+}
 
 export const detectCmd = command({
     name: 'detect',
@@ -31,8 +35,8 @@ export const detectCmd = command({
         // Map to a serializable format
         const result = candidates.map(c => ({
             description: c.description,
-            start: c.node.getStart(sourceFile),
-            end: c.node.getEnd()
+            start: positionToLineCol(c.node.getStart(sourceFile), sourceFile),
+            end: positionToLineCol(c.node.getEnd(), sourceFile),
         }));
         
         console.log(JSON.stringify(result, null, 2));
