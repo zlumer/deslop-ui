@@ -6,13 +6,21 @@ import { detectPropsList } from '../extract/detectPropsList';
 import { performRefactoring } from '../extract/performRefactoring';
 import { applyTextChanges } from '../extract/applyTextChanges';
 
+function parsePosition(pos: string, sourceFile: ts.SourceFile): number {
+    if (pos.includes(':')) {
+        const [line, col] = pos.split(':').map(Number);
+        return sourceFile.getPositionOfLineAndCharacter(line - 1, col - 1);
+    }
+    return parseInt(pos, 10);
+}
+
 export const extractCmd = command({
     name: 'extract',
     description: 'Extract a component and apply text changes',
     args: {
         file: option({ type: string, long: 'file' }),
-        start: option({ type: number, long: 'start' }),
-        end: option({ type: number, long: 'end' }),
+        start: option({ type: string, long: 'start', description: 'Offset or line:col (1-based)' }),
+        end: option({ type: string, long: 'end', description: 'Offset or line:col (1-based)' }),
         name: option({ type: string, long: 'name' }),
         props: option({ type: string, long: 'props', description: 'Comma-separated props', defaultValue: () => '' }),
         extractChildren: flag({ type: boolean, long: 'extract-children', defaultValue: () => false })
@@ -23,7 +31,10 @@ export const extractCmd = command({
         const sourceFile = program.getSourceFile(file)!;
         const typeChecker = program.getTypeChecker();
 
-        const candidates = detectComponents(sourceFile, { start, end });
+        const startPos = parsePosition(start, sourceFile);
+        const endPos = parsePosition(end, sourceFile);
+
+        const candidates = detectComponents(sourceFile, { start: startPos, end: endPos });
         if (!candidates.length) {
             console.error(JSON.stringify({ error: "No candidates found at the given selection" }));
             process.exit(1);
