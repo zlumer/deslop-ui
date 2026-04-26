@@ -27,8 +27,8 @@ describe('[cli-simple] Extract JSX Component Refactoring via CLI', () => {
 
 	it('should extract View component', () => {
 		withTempFile(INPUT_CODE, (tempFile) => {
-			const start = INPUT_CODE.lastIndexOf('<button');
-			const end = INPUT_CODE.indexOf('</button>') + '</button>'.length;
+			const start = "147:1"
+			const end = "217:11"
 
 			// Test detect
 			const detectOut = runCli(`detect --file "${tempFile}" --start ${start} --end ${end}`);
