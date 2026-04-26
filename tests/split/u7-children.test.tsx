@@ -57,7 +57,6 @@ describe('[7-children]', () => {
 
 		const decisions = {
 			componentName: 'A',
-			selectedProps: [],
 			childrenReplacementNodes: worldNode ? [worldNode] : []
 		} satisfies RefactorDecisions;
 
@@ -87,7 +86,6 @@ describe('[7-children]', () => {
 
 		const decisions = {
 			componentName: 'B',
-			selectedProps: [],
 			childrenReplacementNodes: helloNode ? [helloNode] : []
 		} satisfies RefactorDecisions;
 
@@ -116,7 +114,6 @@ describe('[7-children]', () => {
 
 		const decisions = {
 			componentName: 'C',
-			selectedProps: [],
 			childrenReplacementNodes: replacementNodes
 		} satisfies RefactorDecisions;
 

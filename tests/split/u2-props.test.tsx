@@ -94,7 +94,6 @@ describe('[2-props]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'UserInfo',
-			selectedProps: ['userName', 'age'], // Pass detected props
 			childrenReplacementNodes: [] // Hardcode children into new component
 		} satisfies RefactorDecisions
 

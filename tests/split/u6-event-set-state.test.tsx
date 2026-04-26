@@ -98,7 +98,6 @@ describe('[6-event-set-state]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'SearchBar',
-			selectedProps: ['query', 'setQuery'], // Pass detected props
 			childrenReplacementNodes: [] // No children to pass
 		} satisfies RefactorDecisions;
 

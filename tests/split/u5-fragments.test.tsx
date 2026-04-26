@@ -85,7 +85,6 @@ describe('[5-fragments]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'ErrorBanner',
-			selectedProps: ['message'], // Pass detected props
 			childrenReplacementNodes: [] // Hardcode children into new component
 		} satisfies RefactorDecisions;
 

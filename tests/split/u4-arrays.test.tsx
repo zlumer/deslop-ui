@@ -83,7 +83,6 @@ describe('[4-arrays]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'ProductListItem',
-			selectedProps: ['product'], // Pass detected props
 			childrenReplacementNodes: [] // Hardcode children into new component
 		} satisfies RefactorDecisions;
 

@@ -116,7 +116,6 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'SubmitButton',
-			selectedProps: [],      // No props to pass
 			childrenReplacementNodes: [] // Hardcode children into new component
 		} satisfies RefactorDecisions
 
@@ -181,7 +180,6 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'SubmitButton',
-			selectedProps: [],      // No props to pass
 			childrenReplacementNodes: decisionsRequest.childrenNodes
 		} satisfies RefactorDecisions
 
@@ -232,7 +230,6 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'Heading',
-			selectedProps: [],      // No props to pass
 			childrenReplacementNodes: decisionsRequest.childrenNodes
 		} satisfies RefactorDecisions
 
@@ -283,7 +280,6 @@ describe('[1-simple] Extract JSX Component Refactoring', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'Heading',
-			selectedProps: [],      // No props to pass
 			childrenReplacementNodes: []
 		} satisfies RefactorDecisions
 

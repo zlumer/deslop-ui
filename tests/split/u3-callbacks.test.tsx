@@ -87,7 +87,6 @@ describe('[3-callbacks]', () =>
 		// -------------------------------------------------------------------
 		const decisions = {
 			componentName: 'IncrementButton',
-			selectedProps: ['handleIncrement', 'count'], // Pass detected props
 			childrenReplacementNodes: [] // Hardcode children into new component
 		} satisfies RefactorDecisions;
 
