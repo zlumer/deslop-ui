@@ -19,8 +19,9 @@ function positionToLineCol(pos: number, sourceFile: ts.SourceFile): `${number}:$
 
 function generateTag(description: string, start: string, end: string): string {
     const hash = crypto.createHash('sha256').update(`${description}|${start}|${end}`).digest();
-    // Use the first 6 bytes to ensure the resulting base58 string is < 10 characters
-    return base58.encode(hash.subarray(0, 6));
+    // Use the first 4 bytes as an integer to ensure the resulting base58 string is short
+    const num = hash.readUInt32BE(0);
+    return base58.encode(num);
 }
 
 export const detectCmd = command({
