@@ -1,4 +1,3 @@
-// src/extract/scoreComponentComplexity.ts
 import * as ts from 'typescript';
 
 export interface ComplexityMetrics {
