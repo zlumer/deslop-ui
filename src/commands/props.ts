@@ -1,4 +1,4 @@
-import { command, string, option } from 'cmd-ts';
+import { command, string, option, optional } from 'cmd-ts';
 import * as ts from 'typescript';
 import { detectComponents } from '../extract/detectComponents';
 import { detectPropsList } from '../extract/detectPropsList';
@@ -16,25 +16,44 @@ export const propsCmd = command({
     description: 'Detect props for a component selection',
     args: {
         file: option({ type: string, long: 'file' }),
-        start: option({ type: string, long: 'start' }),
-        end: option({ type: string, long: 'end' }),
+        start: option({ type: optional(string), long: 'start' }),
+        end: option({ type: optional(string), long: 'end' }),
+        tag: option({ type: optional(string), long: 'tag' }),
     },
-    handler: ({ file, start, end }) => {
+    handler: ({ file, start, end, tag }) => {
         const program = ts.createProgram([file], { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.Latest });
         const sourceFile = program.getSourceFile(file)!;
         const typeChecker = program.getTypeChecker();
 
-        const startPos = parsePosition(start, sourceFile);
-        const endPos = parsePosition(end, sourceFile);
+        let startPos = 0;
+        let endPos = sourceFile.getEnd();
 
-        const candidates = detectComponents(sourceFile, { start: startPos, end: endPos });
-        if (!candidates.length) {
-            console.error(JSON.stringify({ error: "No candidates found at the given selection" }));
+        if (start && end) {
+            startPos = parsePosition(start, sourceFile);
+            endPos = parsePosition(end, sourceFile);
+        } else if (!tag) {
+            console.error(JSON.stringify({ error: "Must provide either --tag or both --start and --end" }));
             process.exit(1);
         }
+
+        const candidates = detectComponents(sourceFile, { start: startPos, end: endPos });
         
-        // Use the first matched candidate
-        const request = detectPropsList(sourceFile, typeChecker, candidates[0]);
+        let candidate;
+        if (tag) {
+            candidate = candidates.find(c => c.tag === tag);
+            if (!candidate) {
+                console.error(JSON.stringify({ error: `No candidate found with tag ${tag}` }));
+                process.exit(1);
+            }
+        } else {
+            if (!candidates.length) {
+                console.error(JSON.stringify({ error: "No candidates found at the given selection" }));
+                process.exit(1);
+            }
+            candidate = candidates[0];
+        }
+        
+        const request = detectPropsList(sourceFile, typeChecker, candidate);
         
         const result = {
             props: request.props.map(p => ({ name: p.name })),
