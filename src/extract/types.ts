@@ -1,4 +1,5 @@
 import * as ts from 'typescript';
+import { ComponentComplexity } from './scoreComponentComplexity';
 
 // -----------------------------------------------------------------------
 // Common AST Types & Helpers
@@ -42,6 +43,8 @@ export interface ExtractionCandidate {
 	start: FileCursorPositionFull;
 	/** The end offset of the node in the source file */
 	end: FileCursorPositionFull;
+	/** The calculated complexity score of the component */
+	complexity: ComponentComplexity;
 }
 
 export type ExtractionCandidates = ExtractionCandidate[];
