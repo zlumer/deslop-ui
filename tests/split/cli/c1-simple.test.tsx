@@ -4,8 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const INPUT_CODE = fs.readFileSync(path.join(__dirname, 'c1-simple-input.txt'), 'utf-8')
-const OUTPUT_CODE = fs.readFileSync(path.join(__dirname, 'c1-simple-output.txt'), 'utf-8')
+const INPUT_CODE = fs.readFileSync(path.join(__dirname, 'c1-simple.in.txt'), 'utf-8')
+const OUTPUT_CODE = fs.readFileSync(path.join(__dirname, 'c1-simple.out.txt'), 'utf-8')
 
 function runCli(command: string) {
 	const cliPath = path.resolve(__dirname, '../../src/index.ts');
