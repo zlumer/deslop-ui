@@ -217,7 +217,7 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	const extractionWarnings: string[] = [];
 
 	const isSimpleWrapper = totalMetrics.score < 10;
-	const isShallowCustom = isCustomComponent && totalMetrics.maxDepth < 3;
+	const isShallowCustom = isCustomComponent && totalRaw.maxDepth < 3;
 
 	if (isCustomComponent && childrenCount === 0) {
 		extractionType = 'unknown';
