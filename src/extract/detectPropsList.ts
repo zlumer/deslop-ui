@@ -101,6 +101,7 @@ export function detectPropsList(
 		let isReactNode = false;
 		let isPrimitive = false;
 		let isArray = false;
+		let isFunction = false;
 		const properties = new Set<string>();
 		let inferredTypeNode: ts.TypeNode | undefined;
 
@@ -117,15 +118,19 @@ export function detectPropsList(
 					properties.add(parent.name.text);
 				}
 			} else if (ts.isCallExpression(parent)) {
-				const argIndex = parent.arguments.indexOf(n);
-				if (argIndex !== -1) {
-					const signature = typeChecker.getResolvedSignature(parent);
-					if (signature && signature.parameters.length > argIndex) {
-						const paramSymbol = signature.parameters[argIndex];
-						const paramType = typeChecker.getTypeOfSymbolAtLocation(paramSymbol, parent);
-						const typeNode = typeChecker.typeToTypeNode(paramType, parent, ts.NodeBuilderFlags.NoTruncation);
-						if (typeNode && typeNode.kind !== ts.SyntaxKind.AnyKeyword) {
-							inferredTypeNode = typeNode;
+				if (parent.expression === n) {
+					isFunction = true;
+				} else {
+					const argIndex = parent.arguments.indexOf(n);
+					if (argIndex !== -1) {
+						const signature = typeChecker.getResolvedSignature(parent);
+						if (signature && signature.parameters.length > argIndex) {
+							const paramSymbol = signature.parameters[argIndex];
+							const paramType = typeChecker.getTypeOfSymbolAtLocation(paramSymbol, parent);
+							const typeNode = typeChecker.typeToTypeNode(paramType, parent, ts.NodeBuilderFlags.NoTruncation);
+							if (typeNode && typeNode.kind !== ts.SyntaxKind.AnyKeyword) {
+								inferredTypeNode = typeNode;
+							}
 						}
 					}
 				}
@@ -133,6 +138,23 @@ export function detectPropsList(
 		}
 
 		if (inferredTypeNode) return inferredTypeNode;
+
+		if (isFunction) {
+			return ts.factory.createFunctionTypeNode(
+				undefined,
+				[
+					ts.factory.createParameterDeclaration(
+						undefined,
+						ts.factory.createToken(ts.SyntaxKind.DotDotDotToken),
+						ts.factory.createIdentifier("args"),
+						undefined,
+						ts.factory.createArrayTypeNode(ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)),
+						undefined
+					)
+				],
+				ts.factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword)
+			);
+		}
 
 		if (properties.size > 0) {
 			const members = Array.from(properties).map(prop => 

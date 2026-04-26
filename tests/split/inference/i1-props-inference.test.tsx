@@ -112,4 +112,14 @@ describe('Prop Type Inference from Usage', () => {
         expect(getPropType('myArg1')).toBe('string');
         expect(getPropType('myArg2')).toBe('number');
     });
+
+    it('6. infers function type when called directly', () => {
+        const { getPropType } = setupTest(`
+            function App() {
+                let myCallback: any;
+                return <button onClick={() => myCallback(true)}>Click</button>;
+            }
+        `);
+        expect(getPropType('myCallback')).toBe('(...args: any[]) => void');
+    });
 });
