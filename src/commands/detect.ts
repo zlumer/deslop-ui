@@ -33,8 +33,8 @@ export const detectCmd = command({
         // Map to a serializable format
         const result = candidates.map(c => {
             return {
-                tag: c.tag,
-                description: c.description,
+				...c,
+				node: undefined, // Remove the AST node from output
                 start: positionToLineCol(c.start),
                 end: positionToLineCol(c.end),
             };
