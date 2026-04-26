@@ -2,15 +2,7 @@ import { command, string, option } from 'cmd-ts';
 import * as ts from 'typescript';
 import * as fs from 'node:fs';
 import { detectComponents } from '../extract/detectComponents';
-import { positionToLineCol } from '../extract/utils';
-
-function parsePosition(pos: string, sourceFile: ts.SourceFile): number {
-    if (pos.includes(':')) {
-        const [line, col] = pos.split(':').map(Number);
-        return sourceFile.getPositionOfLineAndCharacter(line - 1, col - 1);
-    }
-    return parseInt(pos, 10);
-}
+import { parsePosition, positionToLineCol } from '../extract/utils';
 
 export const detectCmd = command({
     name: 'detect',

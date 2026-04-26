@@ -1,6 +1,8 @@
 import * as crypto from 'node:crypto';
 import base58 from 'base58';
 import * as ts from 'typescript';
+import { ExtractionCandidate } from './types';
+import { detectComponents } from './detectComponents';
 
 export function generateTag(description: string, start: string, end: string): string {
     const hash = crypto.createHash('sha256').update(`${description}|${start}|${end}`).digest();
@@ -26,7 +28,7 @@ export function resolveCandidate(
     start?: string,
     end?: string,
     tag?: string
-): import('./types').ExtractionCandidate {
+): ExtractionCandidate {
     let startPos = 0;
     let endPos = sourceFile.getEnd();
 
@@ -36,13 +38,11 @@ export function resolveCandidate(
     } else if (!tag) {
         throw new Error(JSON.stringify({ error: "Must provide either --tag or both --start and --end" }));
     }
-
-    // We need to import detectComponents here or at the top of the file
-    const { detectComponents } = require('./detectComponents');
+	
     const candidates = detectComponents(sourceFile, { start: startPos, end: endPos });
     
     if (tag) {
-        const candidate = candidates.find((c: any) => c.tag === tag);
+        const candidate = candidates.find((c) => c.tag === tag);
         if (!candidate) {
             throw new Error(JSON.stringify({ error: `No candidate found with tag ${tag}` }));
         }
