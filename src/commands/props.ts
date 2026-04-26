@@ -26,9 +26,20 @@ export const propsCmd = command({
         }
 
         const request = detectPropsList(sourceFile, typeChecker, candidate);
+        const printer = ts.createPrinter();
         
         const result = {
-            props: request.props.map(p => ({ name: p.name })),
+            props: request.props.map(p => {
+                let typeString = 'any';
+                if (p.typeNode) {
+                    typeString = printer.printNode(ts.EmitHint.Unspecified, p.typeNode, sourceFile);
+                }
+                return { 
+                    name: p.name,
+                    type: typeString,
+                    usageCount: p.usageNodes.length
+                };
+            }),
             hasChildren: request.hasChildren
         };
         
