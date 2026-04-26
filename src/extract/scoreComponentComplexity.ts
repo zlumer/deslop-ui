@@ -39,7 +39,7 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 
 		if (ts.isJsxAttribute(n) || ts.isJsxSpreadAttribute(n)) {
 			attributesCount++;
-			if (ts.isJsxAttribute(n) && n.name.text === 'className' && n.initializer) {
+			if (ts.isJsxAttribute(n) && n.name.getText() === 'className' && n.initializer) {
 				if (ts.isStringLiteral(n.initializer)) {
 					stylingVolume += n.initializer.text.length;
 				} else if (ts.isJsxExpression(n.initializer) && n.initializer.expression) {
