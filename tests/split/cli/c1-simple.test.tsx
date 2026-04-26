@@ -41,9 +41,9 @@ describe('[cli-simple] Extract JSX Component Refactoring via CLI', () => {
 			expect(JSON.parse(propsOut).hasChildren).toBe(true);
 			console.log('Props Output:', propsOut);
 
-			// // Test extract
-			// const extractOut = runCli(`extract --file "${tempFile}" --start ${start} --end ${end} --name TaskDetailsPageView`);
-			// expect(JSON.parse(extractOut).success).toBe(true);
+			// Test extract
+			const extractOut = runCli(`extract --file "${tempFile}" --tag ${detectData[0].tag} --name TaskDetailsPageView`);
+			expect(JSON.parse(extractOut).success).toBe(true);
 
 			// const modifiedCode = fs.readFileSync(tempFile, 'utf-8');
 			// expect(modifiedCode.trim()).toBe(OUTPUT_CODE.trim());

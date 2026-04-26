@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import { detectPropsList } from '../../../src/extract/detectPropsList';
 import { ExtractionCandidate } from '../../../src/extract/types';
+import { describe, it, expect } from 'vitest';
 
 function setupTest(code: string) {
     const fileName = 'test.tsx';
