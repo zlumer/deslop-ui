@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import { EditorSelection, ExtractionCandidates } from './types';
 import { generateTag } from './utils';
-import { scoreComponentComplexity } from './scoreComponentComplexity';
+import { scoreComponentComplexity, summarizeComplexity } from './scoreComponentComplexity';
 
 /**
  * 1. Detects which JSX components within the given selection are valid for extraction.
@@ -43,7 +43,7 @@ export function detectComponents(
 						index: end,
 						...sourceFile.getLineAndCharacterOfPosition(end)
 					},
-					complexity: scoreComponentComplexity(node)
+					complexity: summarizeComplexity(scoreComponentComplexity(node))
 				});
 			}
 		}
