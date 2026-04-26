@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { EditorSelection, ExtractionCandidates } from './types';
+import { generateTag } from './utils';
 
 /**
  * 1. Detects which JSX components within the given selection are valid for extraction.
@@ -30,8 +31,17 @@ export function detectComponents(
 			{
 				let description = node.getText(sourceFile).split('\n')[0];
 				candidates.push({
+					tag: generateTag(description, start.toString(), end.toString()),
 					node,
-					description
+					description,
+					start: {
+						index: start,
+						...sourceFile.getLineAndCharacterOfPosition(start)
+					},
+					end: {
+						index: end,
+						...sourceFile.getLineAndCharacterOfPosition(end)
+					}
 				});
 			}
 		}

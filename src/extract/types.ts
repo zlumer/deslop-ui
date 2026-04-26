@@ -20,6 +20,13 @@ export interface EditorSelection {
     end: number;
 }
 
+export type FileCursorPositionInput = number | `${number}:${number}`
+export type FileCursorPositionFull = {
+	index: number
+	line: number
+	character: number
+}
+
 // -----------------------------------------------------------------------
 // STEP 1: Detect Components
 // -----------------------------------------------------------------------
@@ -28,7 +35,13 @@ export interface ExtractionCandidate {
     /** The actual AST node found at the selection */
     node: ExtractableJsxNode;
     /** Human readable description (e.g., "<button className='btn-primary'>...") */
-    description: string; 
+    description: string;
+	/** Unique tag for this candidate (used for correlating decisions) */
+	tag: string;
+	/** The start offset of the node in the source file */
+	start: FileCursorPositionFull;
+	/** The end offset of the node in the source file */
+	end: FileCursorPositionFull;
 }
 
 export type ExtractionCandidates = ExtractionCandidate[];
