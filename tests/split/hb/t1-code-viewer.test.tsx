@@ -84,13 +84,7 @@ describe('Hyperbranch t1-code-viewer', () => {
 
         // Verify the final refactored code matches the expected output
         const isMatch = equals(sourceCode, expectedCode);
-        if (!isMatch) {
-            console.log("--- ACTUAL SOURCE ---");
-            console.log(sourceCode);
-            console.log("--- EXPECTED SOURCE ---");
-            console.log(expectedCode);
-        }
-        
-        expect(isMatch).toBe(true);
+        if (!isMatch)
+			expect(sourceCode).toBe(expectedCode);
     }, 30000);
 });
