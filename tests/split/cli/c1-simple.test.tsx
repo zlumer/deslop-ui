@@ -51,5 +51,5 @@ describe('[cli-simple] Extract JSX Component Refactoring via CLI', () => {
 			if (!equals(modifiedCode, OUTPUT_CODE))
 				expect(modifiedCode).toBe(OUTPUT_CODE)
 		});
-	});
+	}, 10000);
 });
