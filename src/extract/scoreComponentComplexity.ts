@@ -246,3 +246,31 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 		extractionWarnings
 	};
 }
+
+export function summarizeComplexity(complexity: ComponentComplexity): Record<string, number> {
+	const metrics = [
+		{ key: 'logicalComplexity', value: complexity.vector.logical, threshold: 5 },
+		{ key: 'structuralComplexity', value: complexity.vector.structural, threshold: 10 },
+		{ key: 'dependencies', value: complexity.externalDependenciesCount, threshold: 3 },
+		{ key: 'stylingVolume', value: complexity.stylingVolume, threshold: 50 },
+		{ key: 'conditionals', value: complexity.conditionalsCount, threshold: 2 },
+		{ key: 'listRenderings', value: complexity.listRenderingsCount, threshold: 0 },
+		{ key: 'maxDepth', value: complexity.maxDepth, threshold: 4 }
+	];
+
+	const result: Record<string, number> = {};
+
+	metrics
+		.filter(m => m.value > m.threshold)
+		.sort((a, b) => (b.value / (b.threshold || 1)) - (a.value / (a.threshold || 1)))
+		.slice(0, 5)
+		.forEach(m => {
+			result[m.key] = m.value;
+		});
+
+	if (Object.keys(result).length > 0) {
+		result['totalScore'] = Number(complexity.score.toFixed(1));
+	}
+
+	return result;
+}
