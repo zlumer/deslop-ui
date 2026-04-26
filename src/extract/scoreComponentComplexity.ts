@@ -23,7 +23,7 @@ export interface ComplexityMetrics {
 	};
 }
 
-export type ExtractionType = 'atom' | 'layout' | 'list' | 'feature' | 'complex' | 'content' | 'unknown';
+export type ExtractionType = 'atom' | 'layout' | 'list' | 'content' | 'unknown';
 
 export interface ComponentComplexity extends ComplexityMetrics {
 	childrenCount: number;
@@ -200,15 +200,6 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 	if (isCustomComponent && childrenCount === 0) {
 		extractionType = 'unknown';
 		extractionWarnings.push('This is already a custom component with no children. Extracting it further is usually unnecessary.');
-	} else if (totalMetrics.renderPropsCount > 0) {
-		extractionType = 'complex';
-		extractionWarnings.push('Render props or function-as-child pattern detected. Extraction might require custom hook wrapping or preserving the render prop signature.');
-	} else if (totalMetrics.score > 50 || totalMetrics.vector.structural > 30) {
-		extractionType = 'complex';
-		extractionWarnings.push('This component is very complex. Consider extracting its children first (bottom-up refactoring).');
-	} else if (totalMetrics.vector.coupling > 6) {
-		extractionType = 'feature';
-		extractionWarnings.push('High coupling detected. Extracting this will result in many props. Consider grouping state or extracting a custom hook first.');
 	} else if (totalMetrics.listRenderingsCount > 0) {
 		extractionType = 'list';
 	} else if (contentMetrics.textVolume > 200 && totalMetrics.vector.logical < 5 && totalMetrics.vector.structural < 10) {
@@ -219,7 +210,7 @@ export function scoreComponentComplexity(node: ts.Node): ComponentComplexity {
 		extractionType = 'layout';
 	}
 
-	if (totalMetrics.vector.coupling > 6 && extractionType !== 'feature' && extractionType !== 'complex' && extractionType !== 'unknown') {
+	if (totalMetrics.vector.coupling > 6 && extractionType !== 'unknown') {
 		extractionWarnings.push('High coupling detected. Consider grouping props.');
 	}
 
