@@ -4,6 +4,7 @@ import { subcommands, run } from 'cmd-ts';
 import { detectCmd } from './commands/detect';
 import { propsCmd } from './commands/props';
 import { extractCmd } from './commands/extract';
+import { autoCmd } from './commands/auto';
 
 const app = subcommands({
     name: 'deslop-ui',
@@ -12,6 +13,7 @@ const app = subcommands({
         detect: detectCmd,
         props: propsCmd,
         extract: extractCmd,
+        auto: autoCmd,
     },
 });
 
