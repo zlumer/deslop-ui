@@ -2,6 +2,7 @@ import { command, string, option, positional } from 'cmd-ts';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
+import { execSync } from 'node:child_process';
 import { detectComponents } from '../extract/detectComponents';
 import { detectPropsList } from '../extract/detectPropsList';
 
@@ -100,6 +101,16 @@ Here is the analysis data containing the original code and the detected candidat
 ${JSON.stringify(analysisData, null, 2)}
 `;
 
-        console.log('Generated Prompt:\n', generatedPrompt);
+        console.log('Running AI command...');
+        try {
+            // Use JSON.stringify to safely quote the prompt for the shell
+            const cmd = `${aiCommand} ${JSON.stringify(generatedPrompt)}`;
+            const stdout = execSync(cmd, { encoding: 'utf-8' });
+            console.log("AI DECISION:", stdout);
+        } catch (error: any) {
+            console.error("Error running AI command:", error.message);
+            if (error.stdout) console.error("Stdout:", error.stdout);
+            if (error.stderr) console.error("Stderr:", error.stderr);
+        }
     }
 });
