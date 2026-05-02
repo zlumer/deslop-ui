@@ -1,6 +1,9 @@
 import { command, string, option, positional } from 'cmd-ts';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as ts from 'typescript';
+import { detectComponents } from '../extract/detectComponents';
+import { detectPropsList } from '../extract/detectPropsList';
 
 export const autoCmd = command({
     name: 'auto',
@@ -42,7 +45,38 @@ export const autoCmd = command({
             throw new Error(`No .tsx file found at path: ${inputPath}`);
         }
 
-        console.log('Input File:', inputFile);
-        console.log('AI Command:', aiCommand);
+        const sourceCode = fs.readFileSync(inputFile, 'utf-8');
+        
+        // Create a TS program to get the TypeChecker (required for detectPropsList)
+        const program = ts.createProgram([inputFile], {
+            target: ts.ScriptTarget.Latest,
+            jsx: ts.JsxEmit.React,
+            moduleResolution: ts.ModuleResolutionKind.NodeJs
+        });
+        const typeChecker = program.getTypeChecker();
+        const sourceFile = program.getSourceFile(inputFile);
+
+        if (!sourceFile) {
+            throw new Error(`Could not parse source file: ${inputFile}`);
+        }
+
+        // Detect all components in the entire file
+        const candidates = detectComponents(sourceFile, { start: 0, end: sourceCode.length });
+
+        const analysisData = {
+            originalCode: sourceCode,
+            candidates: candidates.map(candidate => {
+                const propsData = detectPropsList(sourceFile, typeChecker, candidate);
+                return {
+                    description: candidate.description,
+                    start: candidate.start,
+                    end: candidate.end,
+                    complexity: candidate.complexity,
+                    props: propsData.props.map(p => p.name)
+                };
+            })
+        };
+
+        console.log('Analysis Data:', JSON.stringify(analysisData, null, 2));
     }
 });
