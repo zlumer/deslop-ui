@@ -5,6 +5,7 @@ import * as ts from 'typescript';
 import { execSync } from 'node:child_process';
 import { detectComponents } from '../extract/detectComponents';
 import { detectPropsList } from '../extract/detectPropsList';
+import { runCliRefactor, AiExtractionMap } from '../refactor';
 
 export const autoCmd = command({
     name: 'auto',
@@ -21,7 +22,7 @@ export const autoCmd = command({
             description: 'The CLI command to run the AI model (e.g. "claude" or "llm -m gpt-4o")'
         }),
     },
-    handler: ({ path: inputPath, aiCommand }) => {
+    handler: async ({ path: inputPath, aiCommand }) => {
         let inputFile: string | undefined;
 
         if (!fs.existsSync(inputPath)) {
@@ -107,6 +108,35 @@ ${JSON.stringify(analysisData, null, 2)}
             const cmd = `${aiCommand} ${JSON.stringify(generatedPrompt)}`;
             const stdout = execSync(cmd, { encoding: 'utf-8' });
             console.log("AI DECISION:", stdout);
+
+            let aiDecision: AiExtractionMap;
+            try {
+                // Extract JSON in case the AI wrapped it in markdown blocks
+                const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+                const jsonString = jsonMatch ? jsonMatch[0] : stdout;
+                aiDecision = JSON.parse(jsonString);
+
+                if (!aiDecision || !Array.isArray(aiDecision.extractions)) {
+                    throw new Error("Missing 'extractions' array");
+                }
+                for (const ext of aiDecision.extractions) {
+                    if (!ext.nodeId || !ext.name || !ext.folder) {
+                        throw new Error("Extraction object missing required fields (nodeId, name, folder)");
+                    }
+                }
+            } catch (e: any) {
+                throw new Error(`AI did not return valid decision JSON: ${e.message}\nRaw output: ${stdout}`);
+            }
+
+            console.log('Running refactoring engine...');
+            const result = await runCliRefactor(inputFile, { mockAiResponse: aiDecision });
+
+            console.log('\n--- Refactor Summary ---');
+            console.log(`Success: ${result.success}`);
+            console.log(`Extractions Planned: ${aiDecision.extractions.length}`);
+            if (result.warnings.length > 0) console.log(`Warnings:\n  - ${result.warnings.join('\n  - ')}`);
+            console.log(`Temporary Refactor Dir: ${result.tmpRefactorDir}`);
+
         } catch (error: any) {
             console.error("Error running AI command:", error.message);
             if (error.stdout) console.error("Stdout:", error.stdout);
