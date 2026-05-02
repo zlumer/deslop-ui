@@ -128,9 +128,6 @@ ${JSON.stringify(analysisData, null, 2)}
                 throw new Error(`AI did not return valid decision JSON: ${e.message}\nRaw output: ${stdout}`);
             }
 
-            console.log(`Creating backup of original file at ${inputFile}.bak`);
-            fs.writeFileSync(`${inputFile}.bak`, sourceCode);
-
             console.log('Running refactoring engine...');
             const result = await runCliRefactor(inputFile, { mockAiResponse: aiDecision });
 
