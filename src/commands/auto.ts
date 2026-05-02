@@ -128,6 +128,9 @@ ${JSON.stringify(analysisData, null, 2)}
                 throw new Error(`AI did not return valid decision JSON: ${e.message}\nRaw output: ${stdout}`);
             }
 
+            console.log(`Creating backup of original file at ${inputFile}.bak`);
+            fs.writeFileSync(`${inputFile}.bak`, sourceCode);
+
             console.log('Running refactoring engine...');
             const result = await runCliRefactor(inputFile, { mockAiResponse: aiDecision });
 
@@ -136,6 +139,12 @@ ${JSON.stringify(analysisData, null, 2)}
             console.log(`Extractions Planned: ${aiDecision.extractions.length}`);
             if (result.warnings.length > 0) console.log(`Warnings:\n  - ${result.warnings.join('\n  - ')}`);
             console.log(`Temporary Refactor Dir: ${result.tmpRefactorDir}`);
+            
+            if (result.success) {
+                console.log('\n✅ Auto-refactor complete! Please review the changes.');
+            } else {
+                console.log('\n⚠️ Auto-refactor finished, but reported no success. Check warnings.');
+            }
 
         } catch (error: any) {
             console.error("Error running AI command:", error.message);
