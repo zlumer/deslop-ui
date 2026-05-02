@@ -68,6 +68,7 @@ export const autoCmd = command({
             candidates: candidates.map(candidate => {
                 const propsData = detectPropsList(sourceFile, typeChecker, candidate);
                 return {
+                    tag: candidate.tag,
                     description: candidate.description,
                     start: candidate.start,
                     end: candidate.end,
@@ -77,6 +78,28 @@ export const autoCmd = command({
             })
         };
 
-        console.log('Analysis Data:', JSON.stringify(analysisData, null, 2));
+        const generatedPrompt = `You are an expert React refactoring assistant.
+Your task is to analyze the provided React component code and a list of detected extractable JSX nodes.
+You must decide which of these nodes should be extracted into separate components to improve code quality, readability, and maintainability.
+
+You are ONLY deciding WHAT to extract and where. Do NOT output any code. Output ONLY the JSON.
+
+Return a valid JSON object matching this interface:
+{
+  "extractions": [
+    {
+      "nodeId": "string (use the 'tag' from the detected candidates)",
+      "name": "string (suggested component name, e.g., 'UserCard', 'SubmitButton')",
+      "folder": "atoms" | "molecules" | "organisms" | "layouts",
+      "isLayoutSlot": boolean (optional, true if this should be passed as a children/slot prop)
+    }
+  ]
+}
+
+Here is the analysis data containing the original code and the detected candidates:
+${JSON.stringify(analysisData, null, 2)}
+`;
+
+        console.log('Generated Prompt:\n', generatedPrompt);
     }
 });
