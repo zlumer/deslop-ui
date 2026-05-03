@@ -30,7 +30,7 @@ describe('[auto] End-to-end auto refactoring via AI CLI', () => {
 
 		const result = spawnSync('npx', [
 			'tsx', CLI_PATH, 'auto', tmpFile,
-			'--ai-command', `aider --message-file ${promptFile} --yes --no-auto-commit`,
+			'--ai-command', `aider --yes --no-auto-commit --message`,
 		], {
 			encoding: 'utf-8',
 			timeout: TEST_TIMEOUT,

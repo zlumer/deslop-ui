@@ -5,7 +5,9 @@ import * as ts from 'typescript';
 import { execSync } from 'node:child_process';
 import { detectComponents } from '../extract/detectComponents';
 import { detectPropsList } from '../extract/detectPropsList';
-import { runCliRefactor, AiExtractionMap } from '../refactor';
+import { performRefactoring } from '../extract/performRefactoring';
+import { applyTextChanges } from '../extract/applyTextChanges';
+import { AiExtractionMap } from '../refactor';
 
 export const autoCmd = command({
     name: 'auto',
@@ -128,19 +130,103 @@ ${JSON.stringify(analysisData, null, 2)}
                 throw new Error(`AI did not return valid decision JSON: ${e.message}\nRaw output: ${stdout}`);
             }
 
-            console.log('Running refactoring engine...');
-            const result = await runCliRefactor(inputFile, { mockAiResponse: aiDecision });
+            // --- Sequential extraction ---
+            // Each extraction modifies the source, invalidating positions for
+            // subsequent candidates. We re-parse between each extraction and
+            // match candidates by their original JSX text content.
+
+            // Build a lookup: nodeId -> { extraction config, original node text }
+            const extractionPlan: Array<{
+                name: string;
+                folder: string;
+                originalNodeText: string;
+                isLayoutSlot?: boolean;
+            }> = [];
+
+            for (const ext of aiDecision.extractions) {
+                const candidate = candidates.find(c => c.tag === ext.nodeId);
+                if (!candidate) {
+                    console.warn(`Warning: No candidate found for nodeId "${ext.nodeId}" (name: ${ext.name}), skipping.`);
+                    continue;
+                }
+                extractionPlan.push({
+                    name: ext.name,
+                    folder: ext.folder,
+                    originalNodeText: candidate.node.getText(sourceFile),
+                    isLayoutSlot: ext.isLayoutSlot,
+                });
+            }
+
+            // Create a backup before modifying the file
+            const backupFile = inputFile + '.bak';
+            fs.copyFileSync(inputFile, backupFile);
+
+            console.log(`Running refactoring engine (${extractionPlan.length} extractions)...`);
+            let extractedCount = 0;
+            const warnings: string[] = [];
+
+            for (const extraction of extractionPlan) {
+                // Re-read and re-parse the (possibly modified) source
+                const currentSource = fs.readFileSync(inputFile, 'utf-8');
+                const currentProgram = ts.createProgram([inputFile], {
+                    target: ts.ScriptTarget.Latest,
+                    jsx: ts.JsxEmit.React,
+                    moduleResolution: ts.ModuleResolutionKind.NodeJs,
+                });
+                const currentTypeChecker = currentProgram.getTypeChecker();
+                const currentSourceFile = currentProgram.getSourceFile(inputFile);
+
+                if (!currentSourceFile) {
+                    warnings.push(`Failed to re-parse source after previous extraction, stopping.`);
+                    break;
+                }
+
+                // Re-detect candidates and match by original node text
+                const currentCandidates = detectComponents(currentSourceFile, {
+                    start: 0,
+                    end: currentSource.length,
+                });
+
+                const matchingCandidate = currentCandidates.find(
+                    c => c.node.getText(currentSourceFile) === extraction.originalNodeText
+                );
+
+                if (!matchingCandidate) {
+                    warnings.push(`Could not locate candidate for "${extraction.name}" after previous extractions, skipping.`);
+                    continue;
+                }
+
+                // Detect props for this candidate
+                const request = detectPropsList(currentSourceFile, currentTypeChecker, matchingCandidate);
+
+                // Build refactor decisions
+                const decisions = {
+                    componentName: extraction.name,
+                    propRenames: {} as Record<string, string>,
+                    childrenReplacementNodes: extraction.isLayoutSlot ? request.childrenNodes : [],
+                };
+
+                // Perform the AST refactoring and apply text changes
+                const refactorResult = performRefactoring(currentSourceFile, request, decisions);
+                const newCode = applyTextChanges(currentSource, refactorResult.textChanges);
+
+                fs.writeFileSync(inputFile, newCode, 'utf-8');
+                extractedCount++;
+                console.log(`  Extracted: ${extraction.name} (${extraction.folder})`);
+            }
+
+            const success = extractedCount > 0;
 
             console.log('\n--- Refactor Summary ---');
-            console.log(`Success: ${result.success}`);
-            console.log(`Extractions Planned: ${aiDecision.extractions.length}`);
-            if (result.warnings.length > 0) console.log(`Warnings:\n  - ${result.warnings.join('\n  - ')}`);
-            console.log(`Temporary Refactor Dir: ${result.tmpRefactorDir}`);
-            
-            if (result.success) {
-                console.log('\n✅ Auto-refactor complete! Please review the changes.');
+            console.log(`Success: ${success}`);
+            console.log(`Extractions Completed: ${extractedCount}/${aiDecision.extractions.length}`);
+            if (warnings.length > 0) console.log(`Warnings:\n  - ${warnings.join('\n  - ')}`);
+            console.log(`Backup: ${backupFile}`);
+
+            if (success) {
+                console.log('\nAuto-refactor complete. Please review the changes.');
             } else {
-                console.log('\n⚠️ Auto-refactor finished, but reported no success. Check warnings.');
+                console.log('\nAuto-refactor finished with no successful extractions. Check warnings.');
             }
 
         } catch (error: any) {
